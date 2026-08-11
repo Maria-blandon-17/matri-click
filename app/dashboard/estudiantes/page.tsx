@@ -1,7 +1,10 @@
 import { getEstudiantes, eliminarEstudiante } from "@/lib/actions/estudiantes"
 import { getAcudientes } from "@/lib/actions/acudientes"
+import { getVinculosEstudiantes, vincularEstudiante } from "@/lib/actions/cuentas"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { EstudianteFormDialog } from "@/components/dashboard/estudiantes/estudiante-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { CuentaVinculoCell } from "@/components/dashboard/cuenta-vinculo-cell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,10 +23,14 @@ const ESTADO_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
 }
 
 export default async function EstudiantesPage() {
-  const [estudiantes, acudientes] = await Promise.all([
+  const [estudiantes, acudientes, vinculos, perfil] = await Promise.all([
     getEstudiantes(),
     getAcudientes(),
+    getVinculosEstudiantes(),
+    getPerfilActual(),
   ])
+
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,7 +41,7 @@ export default async function EstudiantesPage() {
             Gestiona el registro de estudiantes.
           </p>
         </div>
-        <EstudianteFormDialog acudientes={acudientes} />
+        {esAdmin && <EstudianteFormDialog acudientes={acudientes} />}
       </div>
 
       <Card className="glass-card border-0">
@@ -54,7 +61,8 @@ export default async function EstudiantesPage() {
                   <TableHead>Documento</TableHead>
                   <TableHead>Acudiente</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead>Cuenta</TableHead>}
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,16 +84,28 @@ export default async function EstudiantesPage() {
                         {estudiante.estado_estudiante}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <EstudianteFormDialog
-                        estudiante={estudiante}
-                        acudientes={acudientes}
-                      />
-                      <DeleteButton
-                        itemLabel={`a ${estudiante.nombres} ${estudiante.apellidos}`}
-                        action={eliminarEstudiante.bind(null, estudiante.id_estudiante)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell>
+                        <CuentaVinculoCell
+                          registroId={estudiante.id_estudiante}
+                          vinculado={vinculos.vinculados[estudiante.id_estudiante]}
+                          pendientes={vinculos.pendientes}
+                          vincularAction={vincularEstudiante}
+                        />
+                      </TableCell>
+                    )}
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <EstudianteFormDialog
+                          estudiante={estudiante}
+                          acudientes={acudientes}
+                        />
+                        <DeleteButton
+                          itemLabel={`a ${estudiante.nombres} ${estudiante.apellidos}`}
+                          action={eliminarEstudiante.bind(null, estudiante.id_estudiante)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

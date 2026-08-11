@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearPeriodo, actualizarPeriodo } from "@/lib/actions/periodos"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -91,20 +85,16 @@ export function PeriodoFormDialog({ periodo }: { periodo?: Periodo }) {
             />
             <Field>
               <FieldLabel htmlFor="estado">Estado</FieldLabel>
-              <Select
+              <Combobox
                 name="estado"
                 defaultValue={periodo?.estado ?? "Planeado"}
                 items={ESTADOS}
               >
-                <SelectTrigger id="estado" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Activo">Activo</SelectItem>
-                  <SelectItem value="Finalizado">Finalizado</SelectItem>
-                  <SelectItem value="Planeado">Planeado</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="estado" className="w-full">
+                  <ComboboxValue />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4 -mx-4 -mb-4 rounded-b-2xl border-t border-white/10 bg-black/20 p-4">

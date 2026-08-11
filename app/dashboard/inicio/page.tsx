@@ -2,12 +2,30 @@ import { Users, ClipboardCheck, ClipboardList, School, Filter, ExternalLink } fr
 
 import { getDashboardKpis, getUltimasMatriculas, getOcupacionCupos } from "@/lib/actions/dashboard"
 import { getPeriodos } from "@/lib/actions/periodos"
+import { getPerfilActual } from "@/lib/actions/perfil"
+import { getEstudiantes } from "@/lib/actions/estudiantes"
+import { getMatriculas } from "@/lib/actions/matriculas"
 import { KpiCard } from "@/components/dashboard/kpi-card"
 import { AiInsightCard } from "@/components/dashboard/ai-insight-card"
 import { OcupacionGauge } from "@/components/dashboard/ocupacion-gauge"
 import { MatriculasTable } from "@/components/dashboard/matriculas-table"
+import { InicioPersonal } from "@/components/dashboard/inicio-personal"
 
 export default async function InicioPage() {
+  const perfil = await getPerfilActual()
+
+  if (perfil?.rol === "acudiente" || perfil?.rol === "estudiante") {
+    const vinculado =
+      perfil.rol === "acudiente" ? perfil.id_acudiente !== null : perfil.id_estudiante !== null
+
+    const [estudiantes, matriculas] = await Promise.all([
+      vinculado ? getEstudiantes() : Promise.resolve([]),
+      vinculado ? getMatriculas() : Promise.resolve([]),
+    ])
+
+    return <InicioPersonal vinculado={vinculado} estudiantes={estudiantes} matriculas={matriculas} />
+  }
+
   const [kpis, matriculas, ocupacion, periodos] = await Promise.all([
     getDashboardKpis(),
     getUltimasMatriculas(),

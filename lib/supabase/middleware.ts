@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server"
 
 const PROTECTED_PREFIX = "/dashboard"
 const AUTH_ROUTES = ["/login", "/registro"]
+// Coincide con las secciones admin-only del sidebar (components/dashboard/sidebar.tsx):
+// Administración y Reportes. "/dashboard/cuentas" (Mi perfil) queda fuera a propósito —
+// es accesible para cualquier rol.
+const ADMIN_ONLY_PREFIXES = ["/dashboard/administracion", "/dashboard/reportes"]
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -48,6 +52,21 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/dashboard/inicio"
     url.search = ""
     return NextResponse.redirect(url)
+  }
+
+  if (user && ADMIN_ONLY_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const { data: perfil } = await supabase
+      .from("perfiles")
+      .select("rol")
+      .eq("id", user.id)
+      .single()
+
+    if (perfil?.rol !== "admin") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/dashboard/inicio"
+      url.search = ""
+      return NextResponse.redirect(url)
+    }
   }
 
   return response

@@ -129,6 +129,19 @@
   p {
     text-wrap: pretty;
   }
+
+  /* Chrome/Safari fuerzan un fondo claro en inputs autocompletados (usuario/contraseña
+     guardados) sin importar el CSS del input. Se sobreescribe con el truco del box-shadow
+     inset gigante, que Chrome sí respeta. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    box-shadow: 0 0 0 1000px var(--card) inset !important;
+    -webkit-text-fill-color: var(--foreground) !important;
+    caret-color: var(--foreground);
+    transition: background-color 600000s ease-in-out 0s;
+  }
 }
 
 @layer utilities {

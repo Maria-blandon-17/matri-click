@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearGrupo, actualizarGrupo } from "@/lib/actions/grupos"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -95,55 +89,36 @@ export function GrupoFormDialog({
             </Field>
             <Field>
               <FieldLabel htmlFor="idGrado">Grado</FieldLabel>
-              <Select name="idGrado" defaultValue={grupo?.id_grado} items={gradoItems}>
-                <SelectTrigger id="idGrado" className="w-full">
-                  <SelectValue placeholder="Selecciona un grado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grados.map((g) => (
-                    <SelectItem key={g.id_grado} value={g.id_grado}>
-                      {g.nombre_grado}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox name="idGrado" defaultValue={grupo?.id_grado} items={gradoItems}>
+                <ComboboxTrigger id="idGrado" className="w-full">
+                  <ComboboxValue placeholder="Selecciona un grado" />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
               <FieldError errors={state?.errors?.idGrado?.map((message) => ({ message }))} />
             </Field>
             <Field>
               <FieldLabel htmlFor="idSede">Sede</FieldLabel>
-              <Select name="idSede" defaultValue={grupo?.id_sede} items={sedeItems}>
-                <SelectTrigger id="idSede" className="w-full">
-                  <SelectValue placeholder="Selecciona una sede" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sedes.map((s) => (
-                    <SelectItem key={s.id_sede} value={s.id_sede}>
-                      {s.nombre_sede}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox name="idSede" defaultValue={grupo?.id_sede} items={sedeItems}>
+                <ComboboxTrigger id="idSede" className="w-full">
+                  <ComboboxValue placeholder="Selecciona una sede" />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
               <FieldError errors={state?.errors?.idSede?.map((message) => ({ message }))} />
             </Field>
             <Field>
               <FieldLabel htmlFor="idDirectorGrupo">Director de grupo</FieldLabel>
-              <Select
+              <Combobox
                 name="idDirectorGrupo"
                 defaultValue={grupo?.id_director_grupo ?? "none"}
                 items={{ none: "Sin asignar", ...profesorItems }}
               >
-                <SelectTrigger id="idDirectorGrupo" className="w-full">
-                  <SelectValue placeholder="Sin asignar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar</SelectItem>
-                  {profesores.map((p) => (
-                    <SelectItem key={p.id_profesor} value={p.id_profesor}>
-                      {p.nombres} {p.apellidos}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="idDirectorGrupo" className="w-full">
+                  <ComboboxValue placeholder="Sin asignar" />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4 -mx-4 -mb-4 rounded-b-2xl border-t border-white/10 bg-black/20 p-4">

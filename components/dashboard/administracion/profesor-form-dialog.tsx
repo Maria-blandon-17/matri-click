@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearProfesor, actualizarProfesor } from "@/lib/actions/profesores"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -94,19 +88,16 @@ export function ProfesorFormDialog({ profesor }: { profesor?: Profesor }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="estadoProfesor">Estado</FieldLabel>
-              <Select
+              <Combobox
                 name="estadoProfesor"
                 defaultValue={profesor?.estado_profesor ?? "Activo"}
                 items={ESTADOS}
               >
-                <SelectTrigger id="estadoProfesor" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Activo">Activo</SelectItem>
-                  <SelectItem value="Inactivo">Inactivo</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="estadoProfesor" className="w-full">
+                  <ComboboxValue />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4 -mx-4 -mb-4 rounded-b-2xl border-t border-white/10 bg-black/20 p-4">

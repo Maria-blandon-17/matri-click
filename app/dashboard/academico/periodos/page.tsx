@@ -1,4 +1,5 @@
 import { getPeriodos, eliminarPeriodo } from "@/lib/actions/periodos"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { PeriodoFormDialog } from "@/components/dashboard/academico/periodo-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,7 +20,8 @@ const ESTADO_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
 }
 
 export default async function PeriodosPage() {
-  const periodos = await getPeriodos()
+  const [periodos, perfil] = await Promise.all([getPeriodos(), getPerfilActual()])
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,7 +32,7 @@ export default async function PeriodosPage() {
             Gestiona los periodos y su estado.
           </p>
         </div>
-        <PeriodoFormDialog />
+        {esAdmin && <PeriodoFormDialog />}
       </div>
 
       <Card className="glass-card border-0">
@@ -50,7 +52,7 @@ export default async function PeriodosPage() {
                   <TableHead>Fecha inicio</TableHead>
                   <TableHead>Fecha fin</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -70,13 +72,15 @@ export default async function PeriodosPage() {
                         {periodo.estado}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <PeriodoFormDialog periodo={periodo} />
-                      <DeleteButton
-                        itemLabel={`el periodo "${periodo.nombre_periodo}"`}
-                        action={eliminarPeriodo.bind(null, periodo.id_periodo)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <PeriodoFormDialog periodo={periodo} />
+                        <DeleteButton
+                          itemLabel={`el periodo "${periodo.nombre_periodo}"`}
+                          action={eliminarPeriodo.bind(null, periodo.id_periodo)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

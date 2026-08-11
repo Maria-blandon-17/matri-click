@@ -7,13 +7,7 @@ import { User, CalendarDays, NotebookText } from "lucide-react"
 import { crearMatricula } from "@/lib/actions/matriculas"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import type { Database } from "@/lib/types/database.types"
 
@@ -74,18 +68,12 @@ export function NuevaMatriculaForm({
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="idEstudiante">Estudiante</FieldLabel>
-              <Select name="idEstudiante" items={estudianteItems}>
-                <SelectTrigger id="idEstudiante" className="w-full border-white/10 bg-black/20">
-                  <SelectValue placeholder="Selecciona un estudiante" />
-                </SelectTrigger>
-                <SelectContent>
-                  {estudiantes.map((e) => (
-                    <SelectItem key={e.id_estudiante} value={e.id_estudiante}>
-                      {e.nombres} {e.apellidos} ({e.documento})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox name="idEstudiante" items={estudianteItems}>
+                <ComboboxTrigger id="idEstudiante" className="w-full border-white/10 bg-black/20">
+                  <ComboboxValue placeholder="Selecciona un estudiante" />
+                </ComboboxTrigger>
+                <ComboboxContent searchPlaceholder="Buscar estudiante..." />
+              </Combobox>
               <FieldError
                 errors={state?.errors?.idEstudiante?.map((message) => ({ message }))}
               />
@@ -101,41 +89,28 @@ export function NuevaMatriculaForm({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Field>
               <FieldLabel htmlFor="idPeriodo">Periodo académico</FieldLabel>
-              <Select name="idPeriodo" items={periodoItems}>
-                <SelectTrigger id="idPeriodo" className="w-full border-white/10 bg-black/20">
-                  <SelectValue placeholder="Selecciona un periodo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {periodos.map((p) => (
-                    <SelectItem key={p.id_periodo} value={p.id_periodo}>
-                      {p.nombre_periodo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox name="idPeriodo" items={periodoItems}>
+                <ComboboxTrigger id="idPeriodo" className="w-full border-white/10 bg-black/20">
+                  <ComboboxValue placeholder="Selecciona un periodo" />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
               <FieldError
                 errors={state?.errors?.idPeriodo?.map((message) => ({ message }))}
               />
             </Field>
             <Field>
               <FieldLabel htmlFor="idGrupo">Grupo</FieldLabel>
-              <Select
+              <Combobox
                 name="idGrupo"
                 items={grupoItems}
-                onValueChange={(value) => setGrupoSeleccionado(String(value))}
+                onValueChange={setGrupoSeleccionado}
               >
-                <SelectTrigger id="idGrupo" className="w-full border-white/10 bg-black/20">
-                  <SelectValue placeholder="Selecciona un grupo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grupos.map((g) => (
-                    <SelectItem key={g.id_grupo} value={g.id_grupo}>
-                      {g.nombre_grupo}
-                      {g.grados ? ` — ${g.grados.nombre_grado}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="idGrupo" className="w-full border-white/10 bg-black/20">
+                  <ComboboxValue placeholder="Selecciona un grupo" />
+                </ComboboxTrigger>
+                <ComboboxContent searchPlaceholder="Buscar grupo..." />
+              </Combobox>
               <FieldError errors={state?.errors?.idGrupo?.map((message) => ({ message }))} />
             </Field>
           </div>

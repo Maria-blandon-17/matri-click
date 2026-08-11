@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearEstudiante, actualizarEstudiante } from "@/lib/actions/estudiantes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -94,21 +88,16 @@ export function EstudianteFormDialog({
             <Field orientation="responsive">
               <div className="w-32">
                 <FieldLabel htmlFor="tipoDocumento">Tipo doc.</FieldLabel>
-                <Select
+                <Combobox
                   name="tipoDocumento"
                   defaultValue={estudiante?.tipo_documento ?? "TI"}
                   items={TIPOS_DOC}
                 >
-                  <SelectTrigger id="tipoDocumento" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TI">TI</SelectItem>
-                    <SelectItem value="RC">RC</SelectItem>
-                    <SelectItem value="CE">CE</SelectItem>
-                    <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <ComboboxTrigger id="tipoDocumento" className="w-full">
+                    <ComboboxValue />
+                  </ComboboxTrigger>
+                  <ComboboxContent />
+                </Combobox>
               </div>
               <div className="w-full">
                 <FieldLabel htmlFor="documento">Documento</FieldLabel>
@@ -134,58 +123,43 @@ export function EstudianteFormDialog({
               </div>
               <div className="w-full">
                 <FieldLabel htmlFor="genero">Género</FieldLabel>
-                <Select
+                <Combobox
                   name="genero"
                   defaultValue={estudiante?.genero ?? "Masculino"}
                   items={GENEROS}
                 >
-                  <SelectTrigger id="genero" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Masculino">Masculino</SelectItem>
-                    <SelectItem value="Femenino">Femenino</SelectItem>
-                    <SelectItem value="Otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <ComboboxTrigger id="genero" className="w-full">
+                    <ComboboxValue />
+                  </ComboboxTrigger>
+                  <ComboboxContent />
+                </Combobox>
               </div>
             </Field>
             <Field>
               <FieldLabel htmlFor="idAcudiente">Acudiente</FieldLabel>
-              <Select
+              <Combobox
                 name="idAcudiente"
                 defaultValue={estudiante?.id_acudiente ?? "none"}
                 items={{ none: "Sin asignar", ...acudienteItems }}
               >
-                <SelectTrigger id="idAcudiente" className="w-full">
-                  <SelectValue placeholder="Sin asignar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin asignar</SelectItem>
-                  {acudientes.map((a) => (
-                    <SelectItem key={a.id_acudiente} value={a.id_acudiente}>
-                      {a.nombres} {a.apellidos}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="idAcudiente" className="w-full">
+                  <ComboboxValue placeholder="Sin asignar" />
+                </ComboboxTrigger>
+                <ComboboxContent searchPlaceholder="Buscar acudiente..." />
+              </Combobox>
             </Field>
             <Field>
               <FieldLabel htmlFor="estadoEstudiante">Estado</FieldLabel>
-              <Select
+              <Combobox
                 name="estadoEstudiante"
                 defaultValue={estudiante?.estado_estudiante ?? "Activo"}
                 items={ESTADOS}
               >
-                <SelectTrigger id="estadoEstudiante" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Activo">Activo</SelectItem>
-                  <SelectItem value="Retirado">Retirado</SelectItem>
-                  <SelectItem value="Graduado">Graduado</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="estadoEstudiante" className="w-full">
+                  <ComboboxValue />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
             </Field>
           </FieldGroup>
           <DialogFooter className="mt-4 -mx-4 -mb-4 rounded-b-2xl border-t border-white/10 bg-black/20 p-4">

@@ -1,6 +1,9 @@
 import { getAcudientes, eliminarAcudiente } from "@/lib/actions/acudientes"
+import { getVinculosAcudientes, vincularAcudiente } from "@/lib/actions/cuentas"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { AcudienteFormDialog } from "@/components/dashboard/administracion/acudiente-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { CuentaVinculoCell } from "@/components/dashboard/cuenta-vinculo-cell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,7 +16,13 @@ import {
 } from "@/components/ui/table"
 
 export default async function AcudientesPage() {
-  const acudientes = await getAcudientes()
+  const [acudientes, vinculos, perfil] = await Promise.all([
+    getAcudientes(),
+    getVinculosAcudientes(),
+    getPerfilActual(),
+  ])
+
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +33,7 @@ export default async function AcudientesPage() {
             Gestiona los padres, madres y tutores de los estudiantes.
           </p>
         </div>
-        <AcudienteFormDialog />
+        {esAdmin && <AcudienteFormDialog />}
       </div>
 
       <Card className="glass-card border-0">
@@ -44,7 +53,8 @@ export default async function AcudientesPage() {
                   <TableHead>Documento</TableHead>
                   <TableHead>Parentesco</TableHead>
                   <TableHead>Correo</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead>Cuenta</TableHead>}
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -60,13 +70,25 @@ export default async function AcudientesPage() {
                       <Badge variant="secondary">{acudiente.parentesco}</Badge>
                     </TableCell>
                     <TableCell>{acudiente.correo_electronico ?? "—"}</TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <AcudienteFormDialog acudiente={acudiente} />
-                      <DeleteButton
-                        itemLabel={`a ${acudiente.nombres} ${acudiente.apellidos}`}
-                        action={eliminarAcudiente.bind(null, acudiente.id_acudiente)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell>
+                        <CuentaVinculoCell
+                          registroId={acudiente.id_acudiente}
+                          vinculado={vinculos.vinculados[acudiente.id_acudiente]}
+                          pendientes={vinculos.pendientes}
+                          vincularAction={vincularAcudiente}
+                        />
+                      </TableCell>
+                    )}
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <AcudienteFormDialog acudiente={acudiente} />
+                        <DeleteButton
+                          itemLabel={`a ${acudiente.nombres} ${acudiente.apellidos}`}
+                          action={eliminarAcudiente.bind(null, acudiente.id_acudiente)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

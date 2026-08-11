@@ -3,11 +3,19 @@
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { loginSchema, registroSchema } from "@/lib/validations/auth"
 
 export type AuthFormState = {
   errors?: Record<string, string[]>
   message?: string
+  success?: boolean
+  values?: {
+    nombreCompleto?: string
+    email?: string
+    documento?: string
+    rol?: string
+  }
 } | null
 
 export async function login(
@@ -37,6 +45,15 @@ export async function registro(
   _prevState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  // Se conservan los valores no sensibles del intento anterior para que el formulario
+  // pueda re-poblarlos si la validación o el signUp fallan (nunca se hace eco de contraseñas).
+  const values = {
+    nombreCompleto: formData.get("nombreCompleto")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    documento: formData.get("documento")?.toString() ?? "",
+    rol: formData.get("rol")?.toString() ?? "",
+  }
+
   const validated = registroSchema.safeParse({
     nombreCompleto: formData.get("nombreCompleto"),
     email: formData.get("email"),
@@ -47,7 +64,7 @@ export async function registro(
   })
 
   if (!validated.success) {
-    return { errors: validated.error.flatten().fieldErrors }
+    return { errors: validated.error.flatten().fieldErrors, values }
   }
 
   const { nombreCompleto, email, password, rol, documento } = validated.data
@@ -62,34 +79,40 @@ export async function registro(
   })
 
   if (error) {
-    return { message: error.message }
+    return { message: error.message, values }
   }
 
   if (data.user) {
     // Vincula el perfil recién creado con el estudiante/acudiente existente por documento.
-    // Si no hay coincidencia, el registro queda pendiente para que el admin lo resuelva.
+    // Usa el cliente admin (bypassa RLS) a propósito: un usuario recién registrado y aún sin
+    // vincular no tiene ninguna política de lectura sobre "acudientes"/"estudiantes" (solo
+    // admin, o el propio registro una vez ya vinculado), así que con el cliente normal esta
+    // búsqueda siempre devolvía cero filas y el auto-link nunca ocurría. El alcance queda
+    // acotado: solo lee por documento exacto y solo actualiza el perfil recién creado.
+    const admin = createAdminClient()
+
     if (rol === "acudiente") {
-      const { data: match } = await supabase
+      const { data: match } = await admin
         .from("acudientes")
         .select("id_acudiente")
         .eq("documento", documento)
         .maybeSingle()
 
       if (match) {
-        await supabase
+        await admin
           .from("perfiles")
           .update({ id_acudiente: match.id_acudiente })
           .eq("id", data.user.id)
       }
     } else {
-      const { data: match } = await supabase
+      const { data: match } = await admin
         .from("estudiantes")
         .select("id_estudiante")
         .eq("documento", documento)
         .maybeSingle()
 
       if (match) {
-        await supabase
+        await admin
           .from("perfiles")
           .update({ id_estudiante: match.id_estudiante })
           .eq("id", data.user.id)
@@ -98,6 +121,7 @@ export async function registro(
   }
 
   return {
+    success: true,
     message:
       "Cuenta creada. Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.",
   }

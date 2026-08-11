@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearGrado, actualizarGrado } from "@/lib/actions/grados"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -62,19 +56,16 @@ export function GradoFormDialog({ grado }: { grado?: Grado }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="nivelEducativo">Nivel educativo</FieldLabel>
-              <Select
+              <Combobox
                 name="nivelEducativo"
                 defaultValue={grado?.nivel_educativo ?? "Primaria"}
                 items={NIVELES}
               >
-                <SelectTrigger id="nivelEducativo" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Primaria">Primaria</SelectItem>
-                  <SelectItem value="Bachillerato">Bachillerato</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="nivelEducativo" className="w-full">
+                  <ComboboxValue />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
               <FieldError
                 errors={state?.errors?.nivelEducativo?.map((message) => ({ message }))}
               />

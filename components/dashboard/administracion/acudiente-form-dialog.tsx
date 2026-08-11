@@ -5,13 +5,7 @@ import { Plus, Pencil } from "lucide-react"
 import { crearAcudiente, actualizarAcudiente } from "@/lib/actions/acudientes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
@@ -66,21 +60,16 @@ export function AcudienteFormDialog({ acudiente }: { acudiente?: Acudiente }) {
             <Field orientation="responsive">
               <div className="w-32">
                 <FieldLabel htmlFor="tipoDocumento">Tipo doc.</FieldLabel>
-                <Select
+                <Combobox
                   name="tipoDocumento"
                   defaultValue={acudiente?.tipo_documento ?? "CC"}
                   items={TIPOS_DOC}
                 >
-                  <SelectTrigger id="tipoDocumento" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TI">TI</SelectItem>
-                    <SelectItem value="CC">CC</SelectItem>
-                    <SelectItem value="CE">CE</SelectItem>
-                    <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <ComboboxTrigger id="tipoDocumento" className="w-full">
+                    <ComboboxValue />
+                  </ComboboxTrigger>
+                  <ComboboxContent />
+                </Combobox>
               </div>
               <div className="w-full">
                 <FieldLabel htmlFor="documento">Documento</FieldLabel>
@@ -95,21 +84,16 @@ export function AcudienteFormDialog({ acudiente }: { acudiente?: Acudiente }) {
             <FieldError errors={state?.errors?.documento?.map((message) => ({ message }))} />
             <Field>
               <FieldLabel htmlFor="parentesco">Parentesco</FieldLabel>
-              <Select
+              <Combobox
                 name="parentesco"
                 defaultValue={acudiente?.parentesco ?? "Padre"}
                 items={PARENTESCOS}
               >
-                <SelectTrigger id="parentesco" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Padre">Padre</SelectItem>
-                  <SelectItem value="Madre">Madre</SelectItem>
-                  <SelectItem value="Tutor">Tutor</SelectItem>
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
+                <ComboboxTrigger id="parentesco" className="w-full">
+                  <ComboboxValue />
+                </ComboboxTrigger>
+                <ComboboxContent />
+              </Combobox>
             </Field>
             <Field>
               <FieldLabel htmlFor="correoElectronico">Correo electrónico</FieldLabel>

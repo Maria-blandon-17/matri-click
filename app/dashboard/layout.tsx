@@ -25,9 +25,9 @@ export default async function DashboardLayout({
         backgroundAttachment: "fixed",
       }}
     >
-      <Sidebar />
+      <Sidebar rol={perfil.rol} />
       <div className="flex flex-1 flex-col md:ml-[260px]">
-        <Topbar nombre={perfil.nombre_completo} />
+        <Topbar nombre={perfil.nombre_completo} rol={perfil.rol} />
         <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-5 p-4 sm:p-6">
           {children}
         </main>

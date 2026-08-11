@@ -1,6 +1,9 @@
 import { getProfesores, eliminarProfesor } from "@/lib/actions/profesores"
+import { getVinculosProfesores, vincularProfesor } from "@/lib/actions/cuentas"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { ProfesorFormDialog } from "@/components/dashboard/administracion/profesor-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { CuentaVinculoCell } from "@/components/dashboard/cuenta-vinculo-cell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,7 +16,13 @@ import {
 } from "@/components/ui/table"
 
 export default async function ProfesoresPage() {
-  const profesores = await getProfesores()
+  const [profesores, vinculos, perfil] = await Promise.all([
+    getProfesores(),
+    getVinculosProfesores(),
+    getPerfilActual(),
+  ])
+
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +33,7 @@ export default async function ProfesoresPage() {
             Gestiona el cuerpo docente de la institución.
           </p>
         </div>
-        <ProfesorFormDialog />
+        {esAdmin && <ProfesorFormDialog />}
       </div>
 
       <Card className="glass-card border-0">
@@ -44,7 +53,8 @@ export default async function ProfesoresPage() {
                   <TableHead>Documento</TableHead>
                   <TableHead>Correo</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead>Cuenta</TableHead>}
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -64,13 +74,25 @@ export default async function ProfesoresPage() {
                         {profesor.estado_profesor}
                       </Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <ProfesorFormDialog profesor={profesor} />
-                      <DeleteButton
-                        itemLabel={`a ${profesor.nombres} ${profesor.apellidos}`}
-                        action={eliminarProfesor.bind(null, profesor.id_profesor)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell>
+                        <CuentaVinculoCell
+                          registroId={profesor.id_profesor}
+                          vinculado={vinculos.vinculados[profesor.id_profesor]}
+                          pendientes={vinculos.pendientes}
+                          vincularAction={vincularProfesor}
+                        />
+                      </TableCell>
+                    )}
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <ProfesorFormDialog profesor={profesor} />
+                        <DeleteButton
+                          itemLabel={`a ${profesor.nombres} ${profesor.apellidos}`}
+                          action={eliminarProfesor.bind(null, profesor.id_profesor)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -2,6 +2,7 @@ import { getGrupos, eliminarGrupo } from "@/lib/actions/grupos"
 import { getGrados } from "@/lib/actions/grados"
 import { getSedes } from "@/lib/actions/sedes"
 import { getProfesores } from "@/lib/actions/profesores"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { GrupoFormDialog } from "@/components/dashboard/academico/grupo-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,12 +16,14 @@ import {
 } from "@/components/ui/table"
 
 export default async function GruposPage() {
-  const [grupos, grados, sedes, profesores] = await Promise.all([
+  const [grupos, grados, sedes, profesores, perfil] = await Promise.all([
     getGrupos(),
     getGrados(),
     getSedes(),
     getProfesores(),
+    getPerfilActual(),
   ])
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +34,7 @@ export default async function GruposPage() {
             Gestiona los grupos por grado, sede y director.
           </p>
         </div>
-        <GrupoFormDialog grados={grados} sedes={sedes} profesores={profesores} />
+        {esAdmin && <GrupoFormDialog grados={grados} sedes={sedes} profesores={profesores} />}
       </div>
 
       <Card className="glass-card border-0">
@@ -52,7 +55,7 @@ export default async function GruposPage() {
                   <TableHead>Sede</TableHead>
                   <TableHead>Cupo</TableHead>
                   <TableHead>Director</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -67,18 +70,20 @@ export default async function GruposPage() {
                         ? `${grupo.profesores.nombres} ${grupo.profesores.apellidos}`
                         : "Sin asignar"}
                     </TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <GrupoFormDialog
-                        grupo={grupo}
-                        grados={grados}
-                        sedes={sedes}
-                        profesores={profesores}
-                      />
-                      <DeleteButton
-                        itemLabel={`el grupo "${grupo.nombre_grupo}"`}
-                        action={eliminarGrupo.bind(null, grupo.id_grupo)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <GrupoFormDialog
+                          grupo={grupo}
+                          grados={grados}
+                          sedes={sedes}
+                          profesores={profesores}
+                        />
+                        <DeleteButton
+                          itemLabel={`el grupo "${grupo.nombre_grupo}"`}
+                          action={eliminarGrupo.bind(null, grupo.id_grupo)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

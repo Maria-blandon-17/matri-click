@@ -3,7 +3,9 @@ import { Plus } from "lucide-react"
 
 import { getMatriculas, eliminarMatricula } from "@/lib/actions/matriculas"
 import { getPeriodos } from "@/lib/actions/periodos"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { EstadoMatriculaSelect } from "@/components/dashboard/matriculas/estado-matricula-select"
+import { EstadoMatriculaBadge } from "@/components/dashboard/estado-matricula-badge"
 import { MatriculasFilters } from "@/components/dashboard/matriculas/matriculas-filters"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { Button } from "@/components/ui/button"
@@ -32,13 +34,16 @@ export default async function MatriculasPage({
   searchParams: Promise<{ periodo?: string; estado?: string }>
 }) {
   const params = await searchParams
-  const [matriculas, periodos] = await Promise.all([
+  const [matriculas, periodos, perfil] = await Promise.all([
     getMatriculas({
       idPeriodo: params.periodo,
       estado: params.estado as EstadoMatricula | undefined,
     }),
     getPeriodos(),
+    getPerfilActual(),
   ])
+
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -49,16 +54,18 @@ export default async function MatriculasPage({
             Gestione y audite el estado de los estudiantes matriculados.
           </p>
         </div>
-        <Button
-          className="neon-button"
-          nativeButton={false}
-          render={
-            <Link href="/dashboard/matriculas/nueva">
-              <Plus className="size-4" />
-              Nueva matrícula
-            </Link>
-          }
-        />
+        {esAdmin && (
+          <Button
+            className="neon-button"
+            nativeButton={false}
+            render={
+              <Link href="/dashboard/matriculas/nueva">
+                <Plus className="size-4" />
+                Nueva matrícula
+              </Link>
+            }
+          />
+        )}
       </div>
 
       <div className="glass-card flex flex-col overflow-hidden rounded-xl">
@@ -87,7 +94,7 @@ export default async function MatriculasPage({
                 <TableHead className="font-label-mono text-[11px] tracking-wider text-muted-foreground uppercase">
                   Estado
                 </TableHead>
-                <TableHead className="w-10" />
+                {esAdmin && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,17 +133,23 @@ export default async function MatriculasPage({
                     {new Date(matricula.fecha_matricula).toLocaleDateString("es-CO")}
                   </TableCell>
                   <TableCell>
-                    <EstadoMatriculaSelect
-                      id={matricula.id_matricula}
-                      estado={matricula.estado_matricula}
-                    />
+                    {esAdmin ? (
+                      <EstadoMatriculaSelect
+                        id={matricula.id_matricula}
+                        estado={matricula.estado_matricula}
+                      />
+                    ) : (
+                      <EstadoMatriculaBadge estado={matricula.estado_matricula} />
+                    )}
                   </TableCell>
-                  <TableCell>
-                    <DeleteButton
-                      itemLabel={`la matrícula "${matricula.codigo_matricula}"`}
-                      action={eliminarMatricula.bind(null, matricula.id_matricula)}
-                    />
-                  </TableCell>
+                  {esAdmin && (
+                    <TableCell>
+                      <DeleteButton
+                        itemLabel={`la matrícula "${matricula.codigo_matricula}"`}
+                        action={eliminarMatricula.bind(null, matricula.id_matricula)}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

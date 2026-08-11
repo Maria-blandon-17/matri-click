@@ -4,13 +4,7 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 
 import { actualizarEstadoMatricula } from "@/lib/actions/matriculas"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import type { EstadoMatricula } from "@/lib/types/database.types"
 import { cn } from "@/lib/utils"
 
@@ -32,7 +26,7 @@ export function EstadoMatriculaSelect({
   const [pending, startTransition] = useTransition()
 
   return (
-    <Select
+    <Combobox
       name="estadoMatricula"
       defaultValue={estado}
       items={ESTADOS}
@@ -40,7 +34,7 @@ export function EstadoMatriculaSelect({
       onValueChange={(value) => {
         startTransition(async () => {
           const formData = new FormData()
-          formData.set("estadoMatricula", String(value))
+          formData.set("estadoMatricula", value)
           const result = await actualizarEstadoMatricula(id, null, formData)
           if (result?.message === "ok") {
             toast.success("Estado actualizado.")
@@ -50,20 +44,15 @@ export function EstadoMatriculaSelect({
         })
       }}
     >
-      <SelectTrigger
-        size="sm"
+      <ComboboxTrigger
         className={cn(
           "font-label-mono w-36 border-transparent bg-transparent text-xs hover:bg-white/5 focus-visible:border-primary/50",
           COLOR_BY_ESTADO[estado]
         )}
       >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="Activa">Activa</SelectItem>
-        <SelectItem value="Cancelada">Cancelada</SelectItem>
-        <SelectItem value="Finalizada">Finalizada</SelectItem>
-      </SelectContent>
-    </Select>
+        <ComboboxValue />
+      </ComboboxTrigger>
+      <ComboboxContent />
+    </Combobox>
   )
 }

@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
+import { toast } from "sonner"
 import {
   User,
   Mail,
@@ -29,7 +30,20 @@ const inputClassName =
 export default function RegistroPage() {
   const [state, action, pending] = useActionState(registro, initialState)
   const [showPassword, setShowPassword] = useState(false)
-  const [rol, setRol] = useState<"acudiente" | "estudiante">("acudiente")
+  const [rol, setRol] = useState<"acudiente" | "estudiante">(
+    state?.values?.rol === "estudiante" ? "estudiante" : "acudiente"
+  )
+
+  useEffect(() => {
+    if (!state) return
+    if (state.success) {
+      toast.success(state.message ?? "Cuenta creada correctamente.")
+    } else if (state.message) {
+      toast.error(state.message)
+    } else if (state.errors) {
+      toast.error("Revisa los campos marcados en rojo.")
+    }
+  }, [state])
 
   return (
     <div className="glass-card relative overflow-hidden rounded-2xl p-8 shadow-2xl">
@@ -56,6 +70,7 @@ export default function RegistroPage() {
                 id="nombreCompleto"
                 name="nombreCompleto"
                 placeholder="Ej. Juan Pérez"
+                defaultValue={state?.values?.nombreCompleto}
                 required
                 className={inputClassName}
               />
@@ -76,6 +91,7 @@ export default function RegistroPage() {
                 name="email"
                 type="email"
                 placeholder="tu@email.com"
+                defaultValue={state?.values?.email}
                 required
                 autoComplete="email"
                 className={inputClassName}
@@ -97,6 +113,7 @@ export default function RegistroPage() {
                 id="documento"
                 name="documento"
                 placeholder="123456789"
+                defaultValue={state?.values?.documento}
                 required
                 className={inputClassName}
               />
@@ -189,7 +206,11 @@ export default function RegistroPage() {
             />
           </Field>
 
-          {state?.message && <p className="text-sm text-muted-foreground">{state.message}</p>}
+          {state?.message && (
+            <p className={cn("text-sm", state.success ? "text-emerald-400" : "text-destructive")}>
+              {state.message}
+            </p>
+          )}
 
           <button
             type="submit"

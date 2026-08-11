@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { LogOut, Plus } from "lucide-react"
+import { LogOut, Plus, UserRound } from "lucide-react"
 
 import { logout } from "@/lib/actions/auth"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
+import type { RolUsuario } from "@/lib/types/database.types"
 
 function initials(name: string | null | undefined) {
   if (!name) return "AD"
@@ -22,7 +23,7 @@ function initials(name: string | null | undefined) {
     .join("")
 }
 
-export function Topbar({ nombre }: { nombre?: string | null }) {
+export function Topbar({ nombre, rol }: { nombre?: string | null; rol: RolUsuario }) {
   const fecha = new Date()
     .toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "long" })
     .toUpperCase()
@@ -30,7 +31,7 @@ export function Topbar({ nombre }: { nombre?: string | null }) {
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-4">
-        <MobileSidebar />
+        <MobileSidebar rol={rol} />
         <div>
           <p className="font-label-mono mb-1 text-[11px] tracking-widest text-muted-foreground">
             {fecha}
@@ -41,16 +42,18 @@ export function Topbar({ nombre }: { nombre?: string | null }) {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <Button
-          className="neon-button font-label-mono hidden rounded-lg bg-primary text-xs text-primary-foreground hover:bg-primary sm:inline-flex"
-          nativeButton={false}
-          render={
-            <Link href="/dashboard/matriculas/nueva">
-              <Plus className="size-4" />
-              Nueva matrícula
-            </Link>
-          }
-        />
+        {rol === "admin" && (
+          <Button
+            className="neon-button font-label-mono hidden rounded-lg bg-primary text-xs text-primary-foreground hover:bg-primary sm:inline-flex"
+            nativeButton={false}
+            render={
+              <Link href="/dashboard/matriculas/nueva">
+                <Plus className="size-4" />
+                Nueva matrícula
+              </Link>
+            }
+          />
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none">
             <Avatar className="size-10 border-2 border-primary/30">
@@ -58,7 +61,15 @@ export function Topbar({ nombre }: { nombre?: string | null }) {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link href="/dashboard/cuentas" className="flex w-full items-center gap-2">
+                  <UserRound className="size-4" />
+                  Mi perfil
+                </Link>
+              }
+            />
+            <DropdownMenuItem variant="destructive">
               <form action={logout} className="contents">
                 <button type="submit" className="flex w-full items-center gap-2">
                   <LogOut className="size-4" />

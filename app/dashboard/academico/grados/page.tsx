@@ -1,4 +1,5 @@
 import { getGrados, eliminarGrado } from "@/lib/actions/grados"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { GradoFormDialog } from "@/components/dashboard/academico/grado-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +14,8 @@ import {
 } from "@/components/ui/table"
 
 export default async function GradosPage() {
-  const grados = await getGrados()
+  const [grados, perfil] = await Promise.all([getGrados(), getPerfilActual()])
+  const esAdmin = perfil?.rol === "admin"
 
   return (
     <div className="flex flex-col gap-6">
@@ -24,7 +26,7 @@ export default async function GradosPage() {
             Gestiona los grados académicos disponibles.
           </p>
         </div>
-        <GradoFormDialog />
+        {esAdmin && <GradoFormDialog />}
       </div>
 
       <Card className="glass-card border-0">
@@ -42,7 +44,7 @@ export default async function GradosPage() {
                 <TableRow className="border-white/5 hover:bg-transparent">
                   <TableHead>Nombre</TableHead>
                   <TableHead>Nivel educativo</TableHead>
-                  <TableHead className="w-20 text-right">Acciones</TableHead>
+                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -52,13 +54,15 @@ export default async function GradosPage() {
                     <TableCell>
                       <Badge variant="secondary">{grado.nivel_educativo}</Badge>
                     </TableCell>
-                    <TableCell className="flex justify-end gap-1">
-                      <GradoFormDialog grado={grado} />
-                      <DeleteButton
-                        itemLabel={`el grado "${grado.nombre_grado}"`}
-                        action={eliminarGrado.bind(null, grado.id_grado)}
-                      />
-                    </TableCell>
+                    {esAdmin && (
+                      <TableCell className="flex justify-end gap-1">
+                        <GradoFormDialog grado={grado} />
+                        <DeleteButton
+                          itemLabel={`el grado "${grado.nombre_grado}"`}
+                          action={eliminarGrado.bind(null, grado.id_grado)}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
