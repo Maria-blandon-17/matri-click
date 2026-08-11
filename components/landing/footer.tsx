@@ -5,16 +5,22 @@ export function Footer() {
         <div className="font-bold">© {new Date().getFullYear()} MatriClick. Precisión sin fricción.</div>
         <div className="flex gap-6">
           <a
-            href="#features"
+            href="#modules"
             className="font-label-mono text-xs text-muted-foreground opacity-80 transition-opacity hover:opacity-100"
           >
-            Funciones
+            Módulos
           </a>
           <a
             href="#how-it-works"
             className="font-label-mono text-xs text-muted-foreground opacity-80 transition-opacity hover:opacity-100"
           >
             Cómo funciona
+          </a>
+          <a
+            href="#planes"
+            className="font-label-mono text-xs text-muted-foreground opacity-80 transition-opacity hover:opacity-100"
+          >
+            Planes
           </a>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { Sparkles, ExternalLink } from "lucide-react"
 
+import { AnimatedNumber } from "@/components/dashboard/animated-number"
+
 export function AiInsightCard({ porcentaje }: { porcentaje: number }) {
   return (
     <div className="glass-card relative flex min-h-[300px] flex-col justify-between overflow-hidden rounded-2xl p-6 lg:col-span-1">
@@ -19,8 +21,11 @@ export function AiInsightCard({ porcentaje }: { porcentaje: number }) {
           <Sparkles className="size-4 text-primary" />
         </div>
         <h3 className="text-2xl leading-tight font-semibold">
-          Tus grupos tienen un <span className="text-primary">{porcentaje}%</span> de ocupación
-          total este periodo.
+          Tus grupos tienen un{" "}
+          <span className="text-primary">
+            <AnimatedNumber value={porcentaje} />%
+          </span>{" "}
+          de ocupación total este periodo.
         </h3>
       </div>
     </div>

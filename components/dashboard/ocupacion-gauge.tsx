@@ -1,5 +1,6 @@
 import { MoreHorizontal } from "lucide-react"
 
+import { AnimatedNumber } from "@/components/dashboard/animated-number"
 import type { OcupacionCupos } from "@/lib/actions/dashboard"
 
 export function OcupacionGauge({
@@ -44,6 +45,7 @@ export function OcupacionGauge({
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
+              className="transition-[stroke-dashoffset] duration-700 ease-out"
               style={{ filter: "drop-shadow(0 0 8px rgba(0,102,255,0.4))" }}
             />
           </svg>
@@ -51,7 +53,9 @@ export function OcupacionGauge({
             <span className="font-label-mono text-[10px] tracking-widest text-muted-foreground uppercase">
               Ocupado
             </span>
-            <span className="text-[36px] leading-none font-bold">{ocupacion.porcentaje}%</span>
+            <span className="text-[36px] leading-none font-bold">
+              <AnimatedNumber value={ocupacion.porcentaje} />%
+            </span>
           </div>
         </div>
         <div className="flex w-full flex-col gap-3 md:w-auto">
@@ -60,14 +64,18 @@ export function OcupacionGauge({
               <span className="size-3 rounded-full bg-primary shadow-[0_0_8px_rgba(0,102,255,0.5)]" />
               <span className="text-sm text-muted-foreground">Matriculados</span>
             </div>
-            <span className="font-bold">{ocupacion.matriculados}</span>
+            <span className="font-bold">
+              <AnimatedNumber value={ocupacion.matriculados} />
+            </span>
           </div>
           <div className="flex items-center justify-between gap-6 rounded-xl border border-white/5 bg-white/5 p-3">
             <div className="flex items-center gap-3">
               <span className="size-3 rounded-full bg-white/20" />
               <span className="text-sm text-muted-foreground">Disponibles</span>
             </div>
-            <span className="font-bold">{ocupacion.disponibles}</span>
+            <span className="font-bold">
+              <AnimatedNumber value={ocupacion.disponibles} />
+            </span>
           </div>
         </div>
       </div>

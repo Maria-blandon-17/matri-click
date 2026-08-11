@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Sparkles, ExternalLink } from "lucide-react"
+import { ArrowRight, Sparkles, TrendingUp } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -48,21 +48,23 @@ export function Hero() {
               <Sparkles className="size-3.5 text-primary" />
               <span className="font-label-mono text-[10px]">AI Insights</span>
             </div>
-            <button className="rounded-lg border border-white/5 bg-card/50 p-1.5 transition-colors hover:bg-card">
-              <ExternalLink className="size-4 text-muted-foreground" />
-            </button>
+            <span className="font-label-mono rounded border border-white/10 bg-card/50 px-2 py-1 text-[9px] text-muted-foreground uppercase">
+              Vista previa
+            </span>
           </div>
-          <div className="relative z-10 mt-auto space-y-2">
-            <div className="mb-2 flex gap-1">
-              <div className="size-1.5 rounded-full bg-primary" />
-              <div className="size-1.5 rounded-full bg-white/20" />
-              <div className="size-1.5 rounded-full bg-white/20" />
-              <div className="size-1.5 rounded-full bg-white/20" />
+          <div className="relative z-10 mt-auto space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <TrendingUp className="size-4 text-primary" />
+              <span>
+                Ocupación de cupos: <span className="font-semibold text-foreground">82%</span> este periodo
+              </span>
             </div>
-            <p className="text-lg font-medium">
-              Tus matrículas activas han aumentado un{" "}
-              <span className="font-bold text-primary">8%</span> este mes.
-            </p>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full w-[82%] rounded-full bg-gradient-to-r from-primary to-[#b3c5ff]"
+                style={{ boxShadow: "0 0 10px rgba(0,102,255,0.5)" }}
+              />
+            </div>
           </div>
         </div>
       </div>

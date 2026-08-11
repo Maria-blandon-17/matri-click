@@ -8,9 +8,9 @@ export function Cta() {
     <section className="mx-auto mb-24 max-w-7xl px-4 sm:px-6">
       <div className="bg-hero-glow glass-card relative overflow-hidden rounded-2xl p-12 text-center">
         <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center">
-          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Eleva tu gestión con IA</h2>
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Transforma tu gestión académica</h2>
           <p className="mb-8 text-muted-foreground">
-            Únete a las instituciones que ya optimizaron sus procesos con MatriClick Pro.
+            Crea tu cuenta gratis y empieza a gestionar matrículas, estudiantes y sedes hoy mismo.
           </p>
           <Button
             size="lg"
@@ -19,7 +19,7 @@ export function Cta() {
             render={
               <Link href="/registro">
                 <Sparkles className="size-4" />
-                Activar MatriClick Pro
+                Comienza gratis
               </Link>
             }
           />

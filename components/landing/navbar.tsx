@@ -20,16 +20,22 @@ export function Navbar() {
             Dashboard
           </a>
           <a
-            href="#features"
+            href="#modules"
             className="font-label-mono text-xs text-muted-foreground transition-colors hover:text-primary"
           >
-            Funciones
+            Módulos
           </a>
           <a
             href="#how-it-works"
             className="font-label-mono text-xs text-muted-foreground transition-colors hover:text-primary"
           >
             Cómo funciona
+          </a>
+          <a
+            href="#planes"
+            className="font-label-mono text-xs text-muted-foreground transition-colors hover:text-primary"
+          >
+            Planes
           </a>
         </nav>
         <div className="flex items-center gap-4">

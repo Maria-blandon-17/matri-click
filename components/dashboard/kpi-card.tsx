@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 
+import { AnimatedNumber } from "@/components/dashboard/animated-number"
+
 export function KpiCard({
   label,
   value,
@@ -17,7 +19,9 @@ export function KpiCard({
         </div>
       </div>
       <p className="mb-1 text-sm text-muted-foreground">{label}</p>
-      <h3 className="text-[32px] leading-none font-bold">{value}</h3>
+      <h3 className="text-[32px] leading-none font-bold">
+        {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+      </h3>
     </div>
   )
 }

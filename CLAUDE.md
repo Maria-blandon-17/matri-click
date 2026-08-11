@@ -151,6 +151,29 @@ está vinculada a ningún registro. Se accede desde el dropdown del avatar en el
 ("Mi perfil" + "Cerrar sesión" juntos ahí — el botón de logout suelto que había en el sidebar se
 quitó para no duplicar la acción).
 
+## `/dashboard/inicio`: filtro por periodo, sin navegar de página
+
+`app/dashboard/inicio/page.tsx` (admin/profesor) hace el fetch inicial en el servidor y le pasa
+los datos a `components/dashboard/inicio-filtro-periodo.tsx` (client), que es quien realmente
+renderiza los KPIs/gauge/tabla y posee el estado. Al cambiar el selector de periodo, **no** se
+navega ni se usa `router.push`/query params — se llama directo a la Server Action
+`getInicioDashboardData(idPeriodo?)` (`lib/actions/dashboard.ts`, que por eso es `"use server"` y
+no `"server-only"`) dentro de un `useTransition`, y se actualiza solo el estado local. Se probó
+primero con navegación por URL y se sintió lento (apagaba toda la pantalla mientras esperaba el
+RSC); el patrón de Server Action llamada directo desde cliente es preferible para cualquier
+filtro similar que se agregue después (ej. por sede).
+
+La animación va en los datos, no en un overlay de carga:
+- `components/dashboard/animated-number.tsx` — anima cualquier número que cambie (conteo con
+  easing, `requestAnimationFrame`, sin librería). Ya está integrado en `KpiCard`,
+  `OcupacionGauge` y `AiInsightCard` — si se agrega un widget nuevo con un número que pueda
+  cambiar en caliente, envolverlo en `<AnimatedNumber value={...} />` en vez de renderizarlo
+  crudo.
+- El arco de `OcupacionGauge` transiciona con `transition-[stroke-dashoffset]` en CSS.
+- Listas/tablas que se reemplazan completas (como `MatriculasTable` en Inicio) usan
+  `key={...datos...}` + `animate-in fade-in` (de `tw-animate-css`, ya importado en
+  `globals.css`) para un fade corto en vez de un salto brusco.
+
 ## Tema oscuro y Portals (gotcha importante)
 
 Todo el sitio vive dentro de un `class="dark"` que hoy está puesto en **`<html>`**
@@ -170,12 +193,41 @@ también. No borrarla pensando que es CSS muerto.
 
 ## Landing pública
 
-`components/landing/modules.tsx` ("Los módulos que ya puedes usar hoy": Estudiantes, Matrículas,
-Académico, Administración) reemplaza contenido que antes era aspiracional/inventado (una tarjeta
-de "Analítica predictiva" sin backend real que se descartó). Regla general para esta landing:
-todo el copy debe corresponder a algo que **de verdad funciona hoy** en `/dashboard` — antes de
-agregar una sección nueva, verificar contra el código real, no inventar features. El CTA final
-("Activar MatriClick Pro") sigue siendo aspiracional a propósito — ver `ROADMAP.md`.
+Secciones, en orden: `Hero` → `DashboardPreview` → `Modules` (`#modules`, "Los módulos que ya
+puedes usar hoy": Estudiantes, Matrículas, Académico, Administración) → `HowItWorks`
+(`#how-it-works`) → `Planes` (`#planes`, comparación Gratis/Pro) → `Cta`. Se eliminó
+`Features` (duplicaba literalmente 2 de sus 3 tarjetas con `Modules`) — si se necesita un
+diferenciador que no sea "módulo", agregarlo como copy dentro de `Modules`/`Planes`, no revivir
+una sección `Features` aparte.
+
+Regla general: todo el copy debe corresponder a algo que **de verdad funciona hoy** en
+`/dashboard` — antes de agregar contenido nuevo, verificar contra el código real, no inventar
+features. La sección `Planes` es la única que menciona explícitamente cosas que no existen
+todavía (columna "Pro"), y lo hace con un badge "Próximamente" a propósito — mantener esa
+honestidad si se edita: nunca presentar algo de `ROADMAP.md` como si ya funcionara. El CTA final
+ya no dice "Activar MatriClick Pro" (esa frase implicaba que Pro ya existía) — dice "Comienza
+gratis" y apunta a `/registro`, coherente con que Pro está marcado "Próximamente" justo arriba.
+Mismo principio en `Hero`: la tarjeta de ejemplo del panel usa lenguaje neutro ("Ocupación de
+cupos: 82% este periodo" + badge "Vista previa"), nunca en segunda persona tipo "tus matrículas
+aumentaron X%" — eso se leía como un resultado real y personal del visitante, cuando es un dato
+de ejemplo fijo. Si se edita ese card, mantener el tono neutro/de ejemplo.
+
+Flujo de trabajo para pedirle diseños a Google Stitch: se genera un prompt describiendo el
+sistema de tokens exacto (colores, tipografía, radios — copiarlos literales de
+`app/globals.css`) más la regla de honestidad de arriba, Stitch devuelve HTML/Tailwind, y ese
+HTML se **adapta** al código real (nunca se pega tal cual) — Stitch tiende a inventar copy,
+límites o columnas de tabla que no corresponden al modelo de datos real (ej. propuso "Programa"
+tipo universidad cuando este es un sistema de colegio con Grado/Grupo, e inventó límites como
+"50 matrículas por semestre" que no existen). También suele agregar fotos de personas generadas
+por IA (URLs `lh3.googleusercontent.com` con prompts de retrato) y frases de analítica
+predictiva inventada (ej. "podrías necesitar abrir 1 grupo más") — nunca copiar ninguna de las
+dos cosas. Revisar cada propuesta de Stitch contra el schema real antes de traerla al código.
+
+`components/landing/dashboard-preview.tsx` reutiliza **directamente** los componentes reales del
+dashboard (`components/dashboard/{kpi-card,ai-insight-card,ocupacion-gauge,matriculas-table}.tsx`)
+con datos de ejemplo con la misma forma que los tipos reales — no es un mockup aparte. Si el
+diseño de esos componentes cambia, la landing cambia sola con ellos. Mantener este patrón: nunca
+recrear una versión "aparte" de un widget del dashboard para la landing.
 
 ## Diseño / marca
 

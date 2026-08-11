@@ -1,4 +1,4 @@
-import "server-only"
+"use server"
 
 import { createClient } from "@/lib/supabase/server"
 import type { EstadoMatricula } from "@/lib/types/database.types"
@@ -28,16 +28,26 @@ const EMPTY_KPIS: DashboardKpis = {
   grupos: 0,
 }
 
-export async function getDashboardKpis(): Promise<DashboardKpis> {
+export async function getDashboardKpis(idPeriodo?: string): Promise<DashboardKpis> {
   const supabase = await createClient()
 
+  let matriculasActivasQuery = supabase
+    .from("matriculas")
+    .select("*", { count: "exact", head: true })
+    .eq("estado_matricula", "Activa")
+  let totalMatriculasQuery = supabase.from("matriculas").select("*", { count: "exact", head: true })
+
+  if (idPeriodo) {
+    matriculasActivasQuery = matriculasActivasQuery.eq("id_periodo", idPeriodo)
+    totalMatriculasQuery = totalMatriculasQuery.eq("id_periodo", idPeriodo)
+  }
+
+  // "Estudiantes" y "Grupos" no están ligados a un periodo en el schema (solo "matriculas" lo
+  // está), así que quedan iguales sin importar el filtro — es correcto, no un bug.
   const [estudiantes, matriculasActivas, totalMatriculas, grupos] = await Promise.all([
     supabase.from("estudiantes").select("*", { count: "exact", head: true }),
-    supabase
-      .from("matriculas")
-      .select("*", { count: "exact", head: true })
-      .eq("estado_matricula", "Activa"),
-    supabase.from("matriculas").select("*", { count: "exact", head: true }),
+    matriculasActivasQuery,
+    totalMatriculasQuery,
     supabase.from("grupos").select("*", { count: "exact", head: true }),
   ])
 
@@ -65,15 +75,20 @@ export type OcupacionCupos = {
   porcentaje: number
 }
 
-export async function getOcupacionCupos(): Promise<OcupacionCupos> {
+export async function getOcupacionCupos(idPeriodo?: string): Promise<OcupacionCupos> {
   const supabase = await createClient()
+
+  let matriculasActivasQuery = supabase
+    .from("matriculas")
+    .select("*", { count: "exact", head: true })
+    .eq("estado_matricula", "Activa")
+  if (idPeriodo) {
+    matriculasActivasQuery = matriculasActivasQuery.eq("id_periodo", idPeriodo)
+  }
 
   const [{ data: grupos }, matriculasActivas] = await Promise.all([
     supabase.from("grupos").select("cupo_maximo"),
-    supabase
-      .from("matriculas")
-      .select("*", { count: "exact", head: true })
-      .eq("estado_matricula", "Activa"),
+    matriculasActivasQuery,
   ])
 
   const cupoTotal = (grupos ?? []).reduce((sum, g) => sum + g.cupo_maximo, 0)
@@ -84,10 +99,10 @@ export async function getOcupacionCupos(): Promise<OcupacionCupos> {
   return { cupoTotal, matriculados, disponibles, porcentaje }
 }
 
-export async function getUltimasMatriculas(): Promise<UltimaMatricula[]> {
+export async function getUltimasMatriculas(idPeriodo?: string): Promise<UltimaMatricula[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("matriculas")
     .select(
       `id_matricula, codigo_matricula, fecha_matricula, estado_matricula,
@@ -97,6 +112,12 @@ export async function getUltimasMatriculas(): Promise<UltimaMatricula[]> {
     )
     .order("fecha_matricula", { ascending: false })
     .limit(10)
+
+  if (idPeriodo) {
+    query = query.eq("id_periodo", idPeriodo)
+  }
+
+  const { data, error } = await query
 
   if (error || !data) return []
 
@@ -111,4 +132,23 @@ export async function getUltimasMatriculas(): Promise<UltimaMatricula[]> {
     fecha_matricula: row.fecha_matricula,
     estado_matricula: row.estado_matricula,
   }))
+}
+
+export type InicioDashboardData = {
+  kpis: DashboardKpis
+  ocupacion: OcupacionCupos
+  matriculas: UltimaMatricula[]
+}
+
+// Se llama directo desde el cliente (Server Action) cuando cambia el filtro de periodo en
+// /dashboard/inicio, sin navegar de página — así la actualización es solo un fetch de datos,
+// no un reload completo del árbol de la página.
+export async function getInicioDashboardData(idPeriodo?: string): Promise<InicioDashboardData> {
+  const [kpis, ocupacion, matriculas] = await Promise.all([
+    getDashboardKpis(idPeriodo),
+    getOcupacionCupos(idPeriodo),
+    getUltimasMatriculas(idPeriodo),
+  ])
+
+  return { kpis, ocupacion, matriculas }
 }

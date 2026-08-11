@@ -26,9 +26,18 @@ const modules = [
 
 export function Modules() {
   return (
-    <section className="mx-auto mb-24 max-w-7xl px-4 sm:px-6">
-      <p className="font-label-mono mb-2 text-xs text-muted-foreground uppercase">Todo en un panel</p>
-      <h2 className="mb-12 text-3xl font-bold">Los módulos que ya puedes usar hoy</h2>
+    <section id="modules" className="mx-auto mb-24 max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto mb-12 max-w-2xl text-center">
+        <p className="font-label-mono mb-3 text-xs tracking-widest text-muted-foreground uppercase">
+          Todo en un panel
+        </p>
+        <h2 className="text-3xl font-bold sm:text-4xl">Los módulos que ya puedes usar hoy</h2>
+        <div className="mx-auto mt-4 mb-6 h-0.5 w-16 rounded-full bg-primary shadow-[0_0_10px_rgba(0,102,255,0.6)]" />
+        <p className="text-sm text-muted-foreground">
+          Cada módulo respeta roles y permisos distintos: administradores, profesores, acudientes
+          y estudiantes ven exactamente lo que les corresponde, ni más ni menos.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {modules.map((module) => (
           <div
