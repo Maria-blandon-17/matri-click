@@ -74,9 +74,11 @@ const nav = [
 export function SidebarNavContent({
   onNavigate,
   rol,
+  pendientesMatriculas = 0,
 }: {
   onNavigate?: () => void
   rol: RolUsuario
+  pendientesMatriculas?: number
 }) {
   const pathname = usePathname()
   const seccionesVisibles = nav
@@ -109,6 +111,11 @@ export function SidebarNavContent({
               >
                 <item.icon className="size-4.5" />
                 {item.label}
+                {item.href === "/dashboard/matriculas" && pendientesMatriculas > 0 && (
+                  <span className="font-label-mono ml-auto rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                    {pendientesMatriculas}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -121,9 +128,11 @@ export function SidebarNavContent({
 export function SidebarContent({
   onNavigate,
   rol,
+  pendientesMatriculas = 0,
 }: {
   onNavigate?: () => void
   rol: RolUsuario
+  pendientesMatriculas?: number
 }) {
   return (
     <>
@@ -137,7 +146,11 @@ export function SidebarContent({
         </div>
       </div>
 
-      <SidebarNavContent onNavigate={onNavigate} rol={rol} />
+      <SidebarNavContent
+        onNavigate={onNavigate}
+        rol={rol}
+        pendientesMatriculas={pendientesMatriculas}
+      />
 
       <div className="group relative mt-4 cursor-default overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/20 to-transparent p-4">
         <div className="relative z-10 flex items-center gap-3">
@@ -154,10 +167,16 @@ export function SidebarContent({
   )
 }
 
-export function Sidebar({ rol }: { rol: RolUsuario }) {
+export function Sidebar({
+  rol,
+  pendientesMatriculas = 0,
+}: {
+  rol: RolUsuario
+  pendientesMatriculas?: number
+}) {
   return (
     <aside className="fixed top-0 left-0 z-40 hidden h-full w-[260px] flex-col gap-4 border-r border-white/10 bg-card/60 p-4 shadow-2xl backdrop-blur-xl md:flex">
-      <SidebarContent rol={rol} />
+      <SidebarContent rol={rol} pendientesMatriculas={pendientesMatriculas} />
     </aside>
   )
 }

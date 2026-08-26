@@ -89,6 +89,13 @@ supabase/migrations/   0001_schema, 0002_roles_y_perfiles, 0003_rls_policies,
                         supabase configurada, se aplican a mano)
 ```
 
+## Diagramas del proyecto
+
+`docs/diagrams/` tiene 3 HTML autocontenidos (abrir directo en el navegador, sin build):
+esquema de clases, modelo entidad-relación (pata de gallina) y casos de uso por rol. Actualizarlos
+a mano cuando cambie el modelo de datos o los permisos por rol — no por cambios de UI. Detalle en
+`docs/diagrams/README.md`.
+
 ## Modelo de datos y roles
 
 Tablas: `sedes, grados, grupos, periodos_academicos, profesores, acudientes, estudiantes,
@@ -255,6 +262,13 @@ conectado al repo, fue un flujo manual de prompt → HTML de Stitch → traducci
   `CrudDialog` + `DeleteButton` (`components/dashboard/crud/`). Para cambiar el look de los
   modales/formularios de **todas** las pantallas de catálogo a la vez, edita esos dos archivos
   en vez de cada página.
+- Paginación: las 8 tablas de listado (las de arriba + Matrículas) usan
+  `components/dashboard/data-table.tsx` (`DataTable`, client component genérico con
+  `header`/`renderRow`) — filas por página configurable (10/25/50), controles abajo a la derecha.
+  Cada entidad tiene su propio wrapper cliente (`<entidad>-table.tsx`) que le pasa el render de
+  fila; el `page.tsx` de cada pantalla sigue siendo Server Component y solo hace fetch + pasa la
+  data cruda (no se puede pasar una función `renderRow` desde un Server Component directo a
+  `DataTable`, por eso existe la capa intermedia de wrappers cliente).
 
 ## Cuentas de prueba
 

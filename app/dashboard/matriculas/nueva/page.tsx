@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation"
+
 import { createClient } from "@/lib/supabase/server"
 import { getPeriodos } from "@/lib/actions/periodos"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import { NuevaMatriculaForm } from "@/components/dashboard/matriculas/nueva-matricula-form"
 
 type GrupoConGrado = {
@@ -10,6 +13,12 @@ type GrupoConGrado = {
 }
 
 export default async function NuevaMatriculaPage() {
+  const perfil = await getPerfilActual()
+  if (!perfil || (perfil.rol !== "admin" && perfil.rol !== "acudiente")) {
+    redirect("/dashboard/matriculas")
+  }
+  const modoSolicitud = perfil.rol === "acudiente"
+
   const supabase = await createClient()
 
   const [{ data: estudiantes }, periodos, { data: grupos }, { data: matriculasActivas }] =
@@ -43,15 +52,20 @@ export default async function NuevaMatriculaPage() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Nueva matrícula</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {modoSolicitud ? "Solicitar matrícula" : "Nueva matrícula"}
+        </h1>
         <p className="mt-1 text-muted-foreground">
-          Complete los detalles para inscribir al estudiante en un nuevo periodo académico.
+          {modoSolicitud
+            ? "Elige el estudiante, periodo y grupo. Un administrador del colegio revisará y aprobará tu solicitud."
+            : "Complete los detalles para inscribir al estudiante en un nuevo periodo académico."}
         </p>
       </div>
       <NuevaMatriculaForm
         estudiantes={estudiantes ?? []}
         periodos={periodos}
         grupos={gruposConDisponibilidad}
+        modoSolicitud={modoSolicitud}
       />
     </div>
   )

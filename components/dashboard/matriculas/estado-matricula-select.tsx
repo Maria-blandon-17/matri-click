@@ -8,9 +8,15 @@ import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/com
 import type { EstadoMatricula } from "@/lib/types/database.types"
 import { cn } from "@/lib/utils"
 
-const ESTADOS = { Activa: "Activa", Cancelada: "Cancelada", Finalizada: "Finalizada" }
+const ESTADOS = {
+  Pendiente: "Pendiente",
+  Activa: "Activa",
+  Cancelada: "Cancelada",
+  Finalizada: "Finalizada",
+}
 
 const COLOR_BY_ESTADO: Record<EstadoMatricula, string> = {
+  Pendiente: "text-amber-400",
   Activa: "text-emerald-400",
   Cancelada: "text-destructive",
   Finalizada: "text-muted-foreground",

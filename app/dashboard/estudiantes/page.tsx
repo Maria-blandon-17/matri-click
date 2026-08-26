@@ -1,26 +1,10 @@
-import { getEstudiantes, eliminarEstudiante } from "@/lib/actions/estudiantes"
+import { getEstudiantes } from "@/lib/actions/estudiantes"
 import { getAcudientes } from "@/lib/actions/acudientes"
-import { getVinculosEstudiantes, vincularEstudiante } from "@/lib/actions/cuentas"
+import { getVinculosEstudiantes } from "@/lib/actions/cuentas"
 import { getPerfilActual } from "@/lib/actions/perfil"
 import { EstudianteFormDialog } from "@/components/dashboard/estudiantes/estudiante-form-dialog"
-import { DeleteButton } from "@/components/dashboard/crud/delete-button"
-import { CuentaVinculoCell } from "@/components/dashboard/cuenta-vinculo-cell"
+import { EstudiantesTable } from "@/components/dashboard/estudiantes/estudiantes-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-
-const ESTADO_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
-  Activo: "default",
-  Graduado: "secondary",
-  Retirado: "outline",
-}
 
 export default async function EstudiantesPage() {
   const [estudiantes, acudientes, vinculos, perfil] = await Promise.all([
@@ -44,73 +28,17 @@ export default async function EstudiantesPage() {
         {esAdmin && <EstudianteFormDialog acudientes={acudientes} />}
       </div>
 
-      <Card className="glass-card border-0">
-        <CardHeader>
+      <Card className="glass-card border-0 py-0">
+        <CardHeader className="pt-6">
           <CardTitle>Estudiantes registrados</CardTitle>
         </CardHeader>
-        <CardContent>
-          {estudiantes.length === 0 ? (
-            <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-              Aún no hay estudiantes registrados.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Documento</TableHead>
-                  <TableHead>Acudiente</TableHead>
-                  <TableHead>Estado</TableHead>
-                  {esAdmin && <TableHead>Cuenta</TableHead>}
-                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {estudiantes.map((estudiante) => (
-                  <TableRow key={estudiante.id_estudiante} className="group border-white/5 hover:bg-white/[0.03]">
-                    <TableCell className="font-medium">
-                      {estudiante.nombres} {estudiante.apellidos}
-                    </TableCell>
-                    <TableCell>
-                      {estudiante.tipo_documento} {estudiante.documento}
-                    </TableCell>
-                    <TableCell>
-                      {estudiante.acudientes
-                        ? `${estudiante.acudientes.nombres} ${estudiante.acudientes.apellidos}`
-                        : "Sin asignar"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={ESTADO_VARIANT[estudiante.estado_estudiante]}>
-                        {estudiante.estado_estudiante}
-                      </Badge>
-                    </TableCell>
-                    {esAdmin && (
-                      <TableCell>
-                        <CuentaVinculoCell
-                          registroId={estudiante.id_estudiante}
-                          vinculado={vinculos.vinculados[estudiante.id_estudiante]}
-                          pendientes={vinculos.pendientes}
-                          vincularAction={vincularEstudiante}
-                        />
-                      </TableCell>
-                    )}
-                    {esAdmin && (
-                      <TableCell className="flex justify-end gap-1">
-                        <EstudianteFormDialog
-                          estudiante={estudiante}
-                          acudientes={acudientes}
-                        />
-                        <DeleteButton
-                          itemLabel={`a ${estudiante.nombres} ${estudiante.apellidos}`}
-                          action={eliminarEstudiante.bind(null, estudiante.id_estudiante)}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="px-0 pb-0">
+          <EstudiantesTable
+            estudiantes={estudiantes}
+            acudientes={acudientes}
+            vinculos={vinculos}
+            esAdmin={esAdmin}
+          />
         </CardContent>
       </Card>
     </div>

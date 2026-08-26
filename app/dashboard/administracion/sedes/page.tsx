@@ -1,16 +1,8 @@
-import { getSedes, eliminarSede } from "@/lib/actions/sedes"
+import { getSedes } from "@/lib/actions/sedes"
 import { getPerfilActual } from "@/lib/actions/perfil"
 import { SedeFormDialog } from "@/components/dashboard/sedes/sede-form-dialog"
-import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { SedesTable } from "@/components/dashboard/sedes/sedes-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 
 export default async function SedesPage() {
   const [sedes, perfil] = await Promise.all([getSedes(), getPerfilActual()])
@@ -28,45 +20,12 @@ export default async function SedesPage() {
         {esAdmin && <SedeFormDialog />}
       </div>
 
-      <Card className="glass-card border-0">
-        <CardHeader>
+      <Card className="glass-card border-0 py-0">
+        <CardHeader className="pt-6">
           <CardTitle>Sedes registradas</CardTitle>
         </CardHeader>
-        <CardContent>
-          {sedes.length === 0 ? (
-            <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-              Aún no hay sedes registradas.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Dirección</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sedes.map((sede) => (
-                  <TableRow key={sede.id_sede} className="group border-white/5 hover:bg-white/[0.03]">
-                    <TableCell className="font-medium">{sede.nombre_sede}</TableCell>
-                    <TableCell>{sede.direccion ?? "—"}</TableCell>
-                    <TableCell>{sede.telefono ?? "—"}</TableCell>
-                    {esAdmin && (
-                      <TableCell className="flex justify-end gap-1">
-                        <SedeFormDialog sede={sede} />
-                        <DeleteButton
-                          itemLabel={`la sede "${sede.nombre_sede}"`}
-                          action={eliminarSede.bind(null, sede.id_sede)}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="px-0 pb-0">
+          <SedesTable sedes={sedes} esAdmin={esAdmin} />
         </CardContent>
       </Card>
     </div>

@@ -5,6 +5,47 @@ implementado y verificado (`tsc` + `eslint` + `next build` limpios); lo marcado 
 acción externa al código (pago, cuenta de terceros) y queda bloqueado hasta que se resuelva
 afuera; lo marcado 💡 es aspiracional a futuro, sin fecha.
 
+## Solicitud de matrícula por el acudiente (✅ resuelto)
+
+Antes solo el admin podía crear matrículas. Ahora el acudiente también puede, desde
+`/dashboard/matriculas/nueva` (mismo formulario, `NuevaMatriculaForm` con prop `modoSolicitud`),
+pero queda en un estado nuevo `"Pendiente"` (agregado al enum `estado_matricula` en
+`supabase/migrations/0007_solicitudes_matricula.sql`) hasta que un admin la aprueba o la rechaza
+desde el mismo selector de estado que ya existía en `/dashboard/matriculas`
+(`EstadoMatriculaSelect`).
+
+- `lib/actions/matriculas.ts`: `crearSolicitudMatricula` (sin validar cupo al crear — el cupo se
+  valida recién al aprobar, dentro de `actualizarEstadoMatricula`, para no bloquear a un acudiente
+  solo porque otro llegó primero). `getMatriculasPendientesCount()` alimenta un badge ámbar en el
+  sidebar/topbar visible solo para admin.
+- RLS nueva: `grupos_select_acudiente` (el acudiente necesita ver el catálogo de grupos para
+  elegir uno) y `matriculas_insert_acudiente` (solo puede insertar en estado `"Pendiente"` y solo
+  para su(s) propio(s) estudiante(s) — no puede auto-aprobarse ni matricular a otro).
+- Notificación elegida: **badge en el dashboard**, no correo — evita depender del SMTP propio que
+  sigue pendiente más abajo en este archivo.
+- Migración en dos archivos por una limitación de Postgres (`unsafe use of new value... New
+  enum values must be committed before they can be used`): `ALTER TYPE ... ADD VALUE` no puede
+  usarse en la misma transacción en la que se agrega. Correr en el SQL Editor de Supabase
+  **`0007_solicitudes_matricula.sql` primero, esperar a que confirme, y solo después**
+  `0007b_solicitudes_matricula_policies.sql` (no pegar los dos juntos en un mismo "Run").
+
+## Paginación en tablas de catálogo (✅ resuelto)
+
+Las 8 tablas de listado (Sedes, Grados, Grupos, Periodos, Profesores, Acudientes, Estudiantes,
+Matrículas) no tenían paginación — mostraban todas las filas siempre. Se agregó
+`components/dashboard/data-table.tsx` (`DataTable`, client component genérico) con selector de
+filas por página (10/25/50, empieza en 10) y controles ◀ ▶ abajo a la derecha. Cada tabla ahora
+vive en su propio componente cliente (`grados-table.tsx`, `estudiantes-table.tsx`, etc.) que le
+pasa a `DataTable` el header y una función `renderRow` — la paginación es del lado del cliente
+(se trae toda la data del servidor como siempre, se pagina en memoria), suficiente para el volumen
+de datos de un colegio; si esto crece mucho, migrar a paginación real con `.range()` en Supabase.
+
+**Primera idea (descartada):** una tabla aparte "Matrículas pendientes" debajo del registro
+normal. Se descartó por duplicar información — en vez de eso, las filas con
+`estado_matricula: "Pendiente"` se resaltan dentro del mismo registro (borde ámbar a la
+izquierda, ícono de reloj junto al nombre, y "Solicitada por [acudiente]" bajo el código) — ver
+`components/dashboard/matriculas/matriculas-registro-table.tsx`.
+
 ## Filtro por periodo en Inicio (✅ resuelto)
 
 `/dashboard/inicio` (admin/profesor) tenía KPIs, ocupación y "Últimas matrículas" siempre

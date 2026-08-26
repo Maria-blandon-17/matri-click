@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esquema MatriClick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg: #eef0f7;
+    --surface: #ffffff;
+    --surface-2: #e4e6f2;
+    --text: #171a2b;
+    --text-muted: #5c6178;
+    --border: #d7d9e8;
+    --accent: #4f46e5;
+    --accent-soft: #ebe9fd;
+    --pk: #0f766e;
+    --pk-soft: #e3f4f1;
+    --warn: #b45309;
+    --warn-soft: #fbeee0;
+    --font-display: "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0c16;
+      --surface: #12142280;
+      --surface-2: #171a2c;
+      --text: #e8e9f5;
+      --text-muted: #9498b3;
+      --border: #2a2f4a;
+      --accent: #8b90f8;
+      --accent-soft: #23244a;
+      --pk: #34d399;
+      --pk-soft: #142b26;
+      --warn: #f0b429;
+      --warn-soft: #332512;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0a0c16;
+    --surface: #12142280;
+    --surface-2: #171a2c;
+    --text: #e8e9f5;
+    --text-muted: #9498b3;
+    --border: #2a2f4a;
+    --accent: #8b90f8;
+    --accent-soft: #23244a;
+    --pk: #34d399;
+    --pk-soft: #142b26;
+    --warn: #f0b429;
+    --warn-soft: #332512;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  header.hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    max-width: 65ch;
+    color: var(--text-muted);
+    font-size: 1.02rem;
+  }
+
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+  }
+
+  .diagram-panel {
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+
+  .diagram-panel pre.mermaid {
+    margin: 0;
+    min-width: 720px;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.12rem 0.4rem;
+    border-radius: 5px;
+  }
+
+  .tag.pk { color: var(--pk); background: var(--pk-soft); }
+  .tag.fk { color: var(--accent); background: var(--accent-soft); }
+  .tag.opt { color: var(--warn); background: var(--warn-soft); }
+  .tag.enum { color: var(--text-muted); background: var(--surface-2); }
+
+  table.map {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  table.map caption {
+    caption-side: top;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+  }
+
+  table.map th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0 0.9rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.map td {
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  table.map tr:last-child td { border-bottom: none; }
+
+  .entity {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .path {
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.25rem 0.25rem;
+  }
+
+  footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    max-width: 65ch;
+  }
+
+  footer code {
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">MatriClick · Modelo de datos</span>
+    <h1>Cómo se relacionan las tablas del sistema</h1>
+    <p class="lede">
+      Este proyecto está escrito en TypeScript, no en un lenguaje orientado a objetos clásico —
+      así que no tiene "clases" con herencia ni métodos propios. Lo que sí tiene, y cumple el
+      mismo papel para leer el proyecto, son <strong>9 entidades</strong> (tablas de la base de
+      datos, definidas en <code>lib/types/database.types.ts</code>) con relaciones fijas entre
+      ellas. El diagrama de abajo muestra esas entidades como si fueran clases: cada caja es una
+      tabla, cada línea es una llave foránea que conecta dos registros.
+    </p>
+  </header>
+
+  <section>
+    <h2>Diagrama</h2>
+    <div class="panel diagram-panel">
+<pre class="mermaid">
+classDiagram
+  class sedes {
+    uuid id_sede
+    string nombre_sede
+    string direccion
+    string telefono
+  }
+  class grados {
+    uuid id_grado
+    string nombre_grado
+    enum nivel_educativo
+  }
+  class profesores {
+    uuid id_profesor
+    string documento
+    string nombres
+    string apellidos
+    enum estado_profesor
+  }
+  class grupos {
+    uuid id_grupo
+    uuid id_grado
+    uuid id_sede
+    string nombre_grupo
+    int cupo_maximo
+    uuid id_director_grupo
+  }
+  class periodos_academicos {
+    uuid id_periodo
+    string nombre_periodo
+    date fecha_inicio
+    date fecha_fin
+    enum estado
+  }
+  class acudientes {
+    uuid id_acudiente
+    enum tipo_documento
+    string documento
+    string nombres
+    string apellidos
+    enum parentesco
+  }
+  class estudiantes {
+    uuid id_estudiante
+    enum tipo_documento
+    string documento
+    string nombres
+    string apellidos
+    enum genero
+    uuid id_acudiente
+    enum estado_estudiante
+  }
+  class matriculas {
+    uuid id_matricula
+    string codigo_matricula
+    uuid id_estudiante
+    uuid id_periodo
+    uuid id_grupo
+    enum estado_matricula
+    string observaciones
+  }
+  class perfiles {
+    uuid id
+    enum rol
+    string nombre_completo
+    uuid id_profesor
+    uuid id_acudiente
+    uuid id_estudiante
+  }
+
+  grados "1" --> "0..*" grupos : id_grado
+  sedes "1" --> "0..*" grupos : id_sede
+  profesores "0..1" --> "0..*" grupos : id_director_grupo
+  acudientes "0..1" --> "0..*" estudiantes : id_acudiente
+  estudiantes "1" --> "0..*" matriculas : id_estudiante
+  periodos_academicos "1" --> "0..*" matriculas : id_periodo
+  grupos "1" --> "0..*" matriculas : id_grupo
+  profesores "0..1" --> "0..1" perfiles : id_profesor
+  acudientes "0..1" --> "0..1" perfiles : id_acudiente
+  estudiantes "0..1" --> "0..1" perfiles : id_estudiante
+</pre>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="tag pk">PK</span> llave primaria (id único de cada fila)</span>
+      <span class="legend-item"><span class="tag fk">FK</span> llave foránea obligatoria (siempre apunta a otra fila)</span>
+      <span class="legend-item"><span class="tag opt">FK?</span> llave foránea opcional (puede quedar sin asignar)</span>
+      <span class="legend-item"><span class="tag enum">enum</span> solo acepta un valor de una lista fija</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cómo leer las flechas</h2>
+    <p class="lede">
+      Una flecha <span class="entity">A "1" → "0..*" B</span> se lee "un A puede tener muchos B,
+      pero cada B pertenece exactamente a un A". Por ejemplo:
+      <strong>grados → grupos</strong> significa que un grado (ej. "Quinto") puede tener varios
+      grupos (5A, 5B), pero cada grupo pertenece a un solo grado. Las relaciones marcadas
+      <span class="tag opt">FK?</span> en el diagrama (director de grupo, acudiente de un
+      estudiante, vínculo de un perfil) pueden quedar vacías — por eso en el código esos campos
+      son <code style="font-family:var(--font-mono);background:var(--surface-2);padding:.1rem .35rem;border-radius:4px;">string | null</code>.
+    </p>
+  </section>
+
+  <section>
+    <h2>De la caja del diagrama al archivo real</h2>
+    <div class="table-wrap">
+      <table class="map">
+        <caption>Cada entidad tiene su tipo en <code style="font-family:var(--font-mono);background:var(--surface-2);padding:.1rem .35rem;border-radius:4px;">database.types.ts</code> y su propio archivo de Server Actions.</caption>
+        <thead>
+          <tr><th>Entidad</th><th>Tipo (TS)</th><th>Server Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="entity">sedes</td><td class="path">Database["public"]["Tables"]["sedes"]</td><td class="path">lib/actions/sedes.ts</td></tr>
+          <tr><td class="entity">grados</td><td class="path">…["grados"]</td><td class="path">lib/actions/grados.ts</td></tr>
+          <tr><td class="entity">grupos</td><td class="path">…["grupos"]</td><td class="path">lib/actions/grupos.ts</td></tr>
+          <tr><td class="entity">periodos_academicos</td><td class="path">…["periodos_academicos"]</td><td class="path">lib/actions/periodos.ts</td></tr>
+          <tr><td class="entity">profesores</td><td class="path">…["profesores"]</td><td class="path">lib/actions/profesores.ts</td></tr>
+          <tr><td class="entity">acudientes</td><td class="path">…["acudientes"]</td><td class="path">lib/actions/acudientes.ts</td></tr>
+          <tr><td class="entity">estudiantes</td><td class="path">…["estudiantes"]</td><td class="path">lib/actions/estudiantes.ts</td></tr>
+          <tr><td class="entity">matriculas</td><td class="path">…["matriculas"]</td><td class="path">lib/actions/matriculas.ts</td></tr>
+          <tr><td class="entity">perfiles</td><td class="path">…["perfiles"]</td><td class="path">lib/actions/perfil.ts + mi-perfil.ts + cuentas.ts</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Actualización: nuevo estado en <code>matriculas</code></h2>
+    <p class="lede">
+      Desde <code>supabase/migrations/0007_solicitudes_matricula.sql</code>,
+      <code>estado_matricula</code> tiene un cuarto valor: <code>Pendiente</code> (antes solo
+      <code>Activa</code> / <code>Cancelada</code> / <code>Finalizada</code>). Se usa cuando un
+      <strong>acudiente</strong> solicita la matrícula desde su cuenta en vez de crearla un admin
+      — queda en espera hasta que un admin la apruebe (pasa a <code>Activa</code>) o la rechace
+      (pasa a <code>Cancelada</code>). El resto de la tabla no cambió: sigue siendo la misma fila
+      apuntando a un estudiante, un periodo y un grupo.
+    </p>
+  </section>
+
+  <footer>
+    El archivo de tipos está escrito a mano (no generado con <code>supabase gen types</code>),
+    así que si el esquema real cambia en Supabase, este diagrama y
+    <code>lib/types/database.types.ts</code> hay que actualizarlos juntos.
+  </footer>
+</div>
+<script>mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });</script>
+</body>
+</html>

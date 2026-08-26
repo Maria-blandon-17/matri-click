@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react"
 import Link from "next/link"
 import { User, CalendarDays, NotebookText } from "lucide-react"
 
-import { crearMatricula } from "@/lib/actions/matriculas"
+import { crearMatricula, crearSolicitudMatricula } from "@/lib/actions/matriculas"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
@@ -28,12 +28,17 @@ export function NuevaMatriculaForm({
   estudiantes,
   periodos,
   grupos,
+  modoSolicitud = false,
 }: {
   estudiantes: Estudiante[]
   periodos: Periodo[]
   grupos: Grupo[]
+  modoSolicitud?: boolean
 }) {
-  const [state, formAction, pending] = useActionState(crearMatricula, null)
+  const [state, formAction, pending] = useActionState(
+    modoSolicitud ? crearSolicitudMatricula : crearMatricula,
+    null
+  )
   const [grupoSeleccionado, setGrupoSeleccionado] = useState<string | undefined>()
 
   const estudianteItems = Object.fromEntries(
@@ -188,6 +193,12 @@ export function NuevaMatriculaForm({
                   {sinCupo ? "Sin cupo" : "Disponible"}
                 </span>
               </div>
+              {modoSolicitud && sinCupo && (
+                <p className="relative z-10 mt-3 text-xs text-muted-foreground">
+                  Este grupo ya no tiene cupo, pero puedes enviar la solicitud igual — quedará en
+                  espera por si se libera un cupo antes de que el colegio la revise.
+                </p>
+              )}
             </>
           ) : (
             <p className="relative z-10 py-8 text-sm text-muted-foreground">
@@ -200,10 +211,16 @@ export function NuevaMatriculaForm({
           {state?.message && <p className="text-sm text-destructive">{state.message}</p>}
           <Button
             type="submit"
-            disabled={pending || sinCupo}
+            disabled={pending || (sinCupo && !modoSolicitud)}
             className="neon-button h-12 rounded-xl font-bold"
           >
-            {pending ? "Matriculando..." : "Confirmar matrícula"}
+            {pending
+              ? modoSolicitud
+                ? "Enviando solicitud..."
+                : "Matriculando..."
+              : modoSolicitud
+                ? "Enviar solicitud"
+                : "Confirmar matrícula"}
           </Button>
           <Button
             type="button"

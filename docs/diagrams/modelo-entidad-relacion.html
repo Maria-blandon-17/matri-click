@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelo ER MatriClick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg: #eef0f7;
+    --surface: #ffffff;
+    --surface-2: #e4e6f2;
+    --text: #171a2b;
+    --text-muted: #5c6178;
+    --border: #d7d9e8;
+    --accent: #4f46e5;
+    --accent-soft: #ebe9fd;
+    --font-display: "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0c16;
+      --surface: #141726;
+      --surface-2: #1a1e33;
+      --text: #e8e9f5;
+      --text-muted: #9498b3;
+      --border: #2a2f4a;
+      --accent: #8b90f8;
+      --accent-soft: #23244a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0a0c16;
+    --surface: #141726;
+    --surface-2: #1a1e33;
+    --text: #e8e9f5;
+    --text-muted: #9498b3;
+    --border: #2a2f4a;
+    --accent: #8b90f8;
+    --accent-soft: #23244a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  header.hero { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede { max-width: 68ch; color: var(--text-muted); font-size: 1.02rem; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .lede code {
+    font-family: var(--font-mono);
+    font-size: 0.87rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .diagram-panel { padding: 1.5rem; overflow-x: auto; }
+  .diagram-panel pre.mermaid { margin: 0; min-width: 760px; }
+
+  .cardinality-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .card-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .mark {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.3rem 0.55rem;
+    border-radius: 6px;
+    min-width: 2.6rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .card-item p { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
+  .card-item strong { color: var(--text); }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-item {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+
+  .compare-item h3 {
+    margin: 0 0 0.4rem;
+    font-size: 0.92rem;
+  }
+
+  .compare-item p { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
+
+  footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    max-width: 68ch;
+  }
+  footer code {
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">MatriClick · Modelo entidad-relación</span>
+    <h1>El modelo de datos, en notación estándar</h1>
+    <p class="lede">
+      Este es el diagrama que en una clase de bases de datos llamarían <strong>modelo
+      entidad-relación (ER)</strong>, dibujado con la notación que de verdad se usa en la
+      industria: <strong>pata de gallina</strong> (<em>crow's foot</em>). Las mismas 9 entidades
+      de <code>lib/types/database.types.ts</code> que ya viste, pero ahora las líneas dicen
+      exactamente cuántos registros de un lado le corresponden a cuántos del otro — eso es lo
+      que un ER diagram comunica y un diagrama de clases no.
+    </p>
+  </header>
+
+  <section>
+    <h2>Diagrama</h2>
+    <div class="panel diagram-panel">
+<pre class="mermaid">
+erDiagram
+    SEDES ||--o{ GRUPOS : "tiene"
+    GRADOS ||--o{ GRUPOS : "clasifica"
+    PROFESORES |o--o{ GRUPOS : "dirige"
+    GRUPOS ||--o{ MATRICULAS : "recibe"
+    PERIODOS_ACADEMICOS ||--o{ MATRICULAS : "abarca"
+    ESTUDIANTES ||--o{ MATRICULAS : "realiza"
+    ACUDIENTES |o--o{ ESTUDIANTES : "responde_por"
+    PROFESORES |o--o| PERFILES : "vinculado_a"
+    ACUDIENTES |o--o| PERFILES : "vinculado_a"
+    ESTUDIANTES |o--o| PERFILES : "vinculado_a"
+
+    SEDES {
+        uuid id_sede PK
+        string nombre_sede
+        string direccion
+        string telefono
+    }
+    GRADOS {
+        uuid id_grado PK
+        string nombre_grado
+        enum nivel_educativo
+    }
+    PROFESORES {
+        uuid id_profesor PK
+        string documento
+        string nombres
+        string apellidos
+        enum estado_profesor
+    }
+    GRUPOS {
+        uuid id_grupo PK
+        uuid id_grado FK
+        uuid id_sede FK
+        string nombre_grupo
+        int cupo_maximo
+        uuid id_director_grupo FK
+    }
+    PERIODOS_ACADEMICOS {
+        uuid id_periodo PK
+        string nombre_periodo
+        date fecha_inicio
+        date fecha_fin
+        enum estado
+    }
+    ACUDIENTES {
+        uuid id_acudiente PK
+        enum tipo_documento
+        string documento
+        string nombres
+        string apellidos
+        enum parentesco
+    }
+    ESTUDIANTES {
+        uuid id_estudiante PK
+        enum tipo_documento
+        string documento
+        string nombres
+        string apellidos
+        enum genero
+        uuid id_acudiente FK
+        enum estado_estudiante
+    }
+    MATRICULAS {
+        uuid id_matricula PK
+        string codigo_matricula
+        uuid id_estudiante FK
+        uuid id_periodo FK
+        uuid id_grupo FK
+        enum estado_matricula
+        string observaciones
+    }
+    PERFILES {
+        uuid id PK
+        enum rol
+        string nombre_completo
+        uuid id_profesor FK
+        uuid id_acudiente FK
+        uuid id_estudiante FK
+    }
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Un mismo campo, dos permisos distintos: <code>estado_matricula</code></h2>
+    <p class="lede">
+      <code>estado_matricula</code> ahora tiene <strong>cuatro</strong> valores, no tres:
+      <code>Pendiente</code>, <code>Activa</code>, <code>Cancelada</code>, <code>Finalizada</code>
+      (agregado en <code>supabase/migrations/0007_solicitudes_matricula.sql</code>). Lo
+      interesante no está en el diagrama de cajas y líneas, sino en <strong>quién puede escribir
+      qué valor</strong> — algo que un ER diagram no muestra, pero que vive en las políticas RLS
+      sobre esta misma tabla:
+    </p>
+    <div class="cardinality-grid">
+      <div class="card-item">
+        <span class="mark">👪</span>
+        <p><strong>Acudiente:</strong> solo puede insertar una fila si <code>estado_matricula = 'Pendiente'</code> y el estudiante es el suyo. Insertar en <code>'Activa'</code> lo rechaza la base de datos, no solo la interfaz.</p>
+      </div>
+      <div class="card-item">
+        <span class="mark">🛡️</span>
+        <p><strong>Admin:</strong> puede escribir cualquier valor en cualquier fila (política <code>matriculas_admin_all</code>) — es quien mueve una solicitud de <code>Pendiente</code> a <code>Activa</code> (aprobar) o <code>Cancelada</code> (rechazar).</p>
+      </div>
+    </div>
+    <p class="lede">
+      Esto es algo que vale la pena que interiorices: <strong>la misma tabla, la misma columna,
+      puede tener reglas de escritura distintas según quién la toca.</strong> El modelo de datos
+      (este diagrama) no cambia por eso — sigue siendo una fila de <code>matriculas</code>
+      apuntando a un estudiante, un periodo y un grupo — pero el <em>permiso</em> para crear esa
+      fila sí depende del rol. Eso vive en RLS, no en el esquema.
+    </p>
+  </section>
+
+  <section>
+    <h2>Cómo leer la pata de gallina</h2>
+    <p class="lede">
+      Cada línea tiene un símbolo en cada extremo. El símbolo pegado a una entidad dice
+      <strong>cuántos registros de esa entidad</strong> le corresponden a un registro del otro
+      lado. Se leen de a par (mínimo y máximo):
+    </p>
+    <div class="cardinality-grid">
+      <div class="card-item">
+        <span class="mark">││</span>
+        <p><strong>Exactamente uno.</strong> Ej.: toda matrícula tiene un único estudiante — nunca cero, nunca dos.</p>
+      </div>
+      <div class="card-item">
+        <span class="mark">│o</span>
+        <p><strong>Cero o uno.</strong> Ej.: un estudiante puede no tener acudiente asignado todavía.</p>
+      </div>
+      <div class="card-item">
+        <span class="mark">○{</span>
+        <p><strong>Cero o muchos</strong> (el "pie de gallina"). Ej.: un grupo puede no tener matrículas aún, o tener varias.</p>
+      </div>
+      <div class="card-item">
+        <span class="mark">│{</span>
+        <p><strong>Uno o muchos.</strong> No aparece en este esquema, pero significa "al menos uno, sin tope".</p>
+      </div>
+    </div>
+    <p class="lede">
+      Ejemplo completo: <code>GRADOS ||--o{ GRUPOS</code> se lee "un grado (exactamente uno) se
+      relaciona con cero o muchos grupos" — y en la otra dirección, "cada grupo pertenece a
+      exactamente un grado". Esa asimetría —uno de los lados obligatorio, el otro con
+      "muchos"— es lo que en bases de datos se llama una relación <strong>uno a muchos</strong>,
+      la más común de todo el esquema.
+    </p>
+  </section>
+
+  <section>
+    <h2>¿No es esto lo mismo que ya vimos?</h2>
+    <div class="compare">
+      <div class="compare-item">
+        <h3>Diagrama de clases (el anterior)</h3>
+        <p>Pensado para verse como el código: cajas con atributos, flechas simples con
+        etiquetas de texto ("1", "0..*"). Útil porque se parece a un diagrama de clases de
+        OOP, pero no es la notación que usarías en una clase de bases de datos.</p>
+      </div>
+      <div class="compare-item">
+        <h3>Modelo ER (este)</h3>
+        <p>La notación real de diseño de bases de datos: pata de gallina, terminología de
+        "entidad" y "relación", y símbolos de cardinalidad estandarizados que cualquier
+        ingeniero de datos reconoce sin leer ninguna etiqueta.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Las tres relaciones marcadas con <code>|o--o|</code> (Profesores, Acudientes y Estudiantes
+    hacia Perfiles) son <strong>uno a uno opcional</strong>: un perfil de acceso puede existir sin
+    estar vinculado a ningún registro académico todavía (por eso el aviso ámbar en "Mi perfil"
+    cuando eso pasa), y un profesor/acudiente/estudiante puede existir sin que nadie se haya
+    registrado con esa cuenta.
+  </footer>
+</div>
+<script>mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });</script>
+</body>
+</html>

@@ -1,17 +1,8 @@
-import { getGrados, eliminarGrado } from "@/lib/actions/grados"
+import { getGrados } from "@/lib/actions/grados"
 import { getPerfilActual } from "@/lib/actions/perfil"
 import { GradoFormDialog } from "@/components/dashboard/academico/grado-form-dialog"
-import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { GradosTable } from "@/components/dashboard/academico/grados-table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 
 export default async function GradosPage() {
   const [grados, perfil] = await Promise.all([getGrados(), getPerfilActual()])
@@ -29,45 +20,12 @@ export default async function GradosPage() {
         {esAdmin && <GradoFormDialog />}
       </div>
 
-      <Card className="glass-card border-0">
-        <CardHeader>
+      <Card className="glass-card border-0 py-0">
+        <CardHeader className="pt-6">
           <CardTitle>Grados registrados</CardTitle>
         </CardHeader>
-        <CardContent>
-          {grados.length === 0 ? (
-            <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-              Aún no hay grados registrados.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Nivel educativo</TableHead>
-                  {esAdmin && <TableHead className="w-20 text-right">Acciones</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {grados.map((grado) => (
-                  <TableRow key={grado.id_grado} className="group border-white/5 hover:bg-white/[0.03]">
-                    <TableCell className="font-medium">{grado.nombre_grado}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{grado.nivel_educativo}</Badge>
-                    </TableCell>
-                    {esAdmin && (
-                      <TableCell className="flex justify-end gap-1">
-                        <GradoFormDialog grado={grado} />
-                        <DeleteButton
-                          itemLabel={`el grado "${grado.nombre_grado}"`}
-                          action={eliminarGrado.bind(null, grado.id_grado)}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="px-0 pb-0">
+          <GradosTable grados={grados} esAdmin={esAdmin} />
         </CardContent>
       </Card>
     </div>

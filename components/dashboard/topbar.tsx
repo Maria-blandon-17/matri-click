@@ -14,7 +14,7 @@ import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
 import type { RolUsuario } from "@/lib/types/database.types"
 
 function initials(name: string | null | undefined) {
-  if (!name) return "AD"
+  if (!name) return "?"
   return name
     .split(" ")
     .filter(Boolean)
@@ -23,7 +23,18 @@ function initials(name: string | null | undefined) {
     .join("")
 }
 
-export function Topbar({ nombre, rol }: { nombre?: string | null; rol: RolUsuario }) {
+export function Topbar({
+  nombre,
+  correo,
+  rol,
+  pendientesMatriculas = 0,
+}: {
+  nombre?: string | null
+  correo?: string | null
+  rol: RolUsuario
+  pendientesMatriculas?: number
+}) {
+  const nombreMostrado = nombre || correo || "tu cuenta"
   const fecha = new Date()
     .toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "long" })
     .toUpperCase()
@@ -31,13 +42,13 @@ export function Topbar({ nombre, rol }: { nombre?: string | null; rol: RolUsuari
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-4">
-        <MobileSidebar rol={rol} />
+        <MobileSidebar rol={rol} pendientesMatriculas={pendientesMatriculas} />
         <div>
           <p className="font-label-mono mb-1 text-[11px] tracking-widest text-muted-foreground">
             {fecha}
           </p>
           <h2 className="text-xl font-semibold sm:text-2xl">
-            ¡Hola de nuevo, <span className="text-primary/80">{nombre ?? "Administrador"}</span>!
+            ¡Hola de nuevo, <span className="text-primary/80">{nombreMostrado}</span>!
           </h2>
         </div>
       </div>
@@ -50,6 +61,11 @@ export function Topbar({ nombre, rol }: { nombre?: string | null; rol: RolUsuari
               <Link href="/dashboard/matriculas/nueva">
                 <Plus className="size-4" />
                 Nueva matrícula
+                {pendientesMatriculas > 0 && (
+                  <span className="ml-1 rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] text-amber-950">
+                    {pendientesMatriculas} pendiente{pendientesMatriculas === 1 ? "" : "s"}
+                  </span>
+                )}
               </Link>
             }
           />
@@ -57,7 +73,7 @@ export function Topbar({ nombre, rol }: { nombre?: string | null; rol: RolUsuari
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 rounded-full outline-none">
             <Avatar className="size-10 border-2 border-primary/30">
-              <AvatarFallback className="bg-card">{initials(nombre)}</AvatarFallback>
+              <AvatarFallback className="bg-card">{initials(nombre || correo)}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

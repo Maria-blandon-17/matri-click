@@ -48,6 +48,7 @@ export function MatriculasFilters({ periodos }: { periodos: Periodo[] }) {
             onChange={(e) => setParam("estado", e.target.value)}
           >
             <option value="all">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
             <option value="Activa">Activa</option>
             <option value="Finalizada">Finalizada</option>
             <option value="Cancelada">Cancelada</option>

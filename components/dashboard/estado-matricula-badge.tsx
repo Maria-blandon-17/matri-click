@@ -5,12 +5,14 @@ const styles: Record<EstadoMatricula, string> = {
   Activa: "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
   Finalizada: "bg-white/5 border-white/10 text-muted-foreground",
   Cancelada: "bg-destructive/10 border-destructive/20 text-destructive",
+  Pendiente: "bg-amber-400/10 border-amber-400/20 text-amber-400",
 }
 
 const dotStyles: Record<EstadoMatricula, string> = {
   Activa: "bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]",
   Finalizada: "bg-muted-foreground",
   Cancelada: "bg-destructive shadow-[0_0_5px_rgba(255,180,171,0.8)]",
+  Pendiente: "bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]",
 }
 
 export function EstadoMatriculaBadge({ estado }: { estado: EstadoMatricula }) {

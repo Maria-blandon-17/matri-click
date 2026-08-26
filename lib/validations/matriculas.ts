@@ -9,5 +9,5 @@ export const matriculaSchema = z.object({
 export type MatriculaInput = z.infer<typeof matriculaSchema>
 
 export const estadoMatriculaSchema = z.object({
-  estadoMatricula: z.enum(["Activa", "Cancelada", "Finalizada"]),
+  estadoMatricula: z.enum(["Activa", "Cancelada", "Finalizada", "Pendiente"]),
 })

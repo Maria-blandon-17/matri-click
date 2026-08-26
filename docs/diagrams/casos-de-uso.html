@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casos de Uso MatriClick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg: #eef0f7;
+    --surface: #ffffff;
+    --surface-2: #e4e6f2;
+    --text: #171a2b;
+    --text-muted: #5c6178;
+    --border: #c9cce0;
+    --accent: #4f46e5;
+    --accent-soft: #ebe9fd;
+    --admin: #b45309;
+    --admin-soft: #fbeee0;
+    --font-display: "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0c16;
+      --surface: #141726;
+      --surface-2: #1a1e33;
+      --text: #e8e9f5;
+      --text-muted: #9498b3;
+      --border: #333a5c;
+      --accent: #8b90f8;
+      --accent-soft: #23244a;
+      --admin: #f0b429;
+      --admin-soft: #332512;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0a0c16;
+    --surface: #141726;
+    --surface-2: #1a1e33;
+    --text: #e8e9f5;
+    --text-muted: #9498b3;
+    --border: #333a5c;
+    --accent: #8b90f8;
+    --accent-soft: #23244a;
+    --admin: #f0b429;
+    --admin-soft: #332512;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  header.hero { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede { max-width: 68ch; color: var(--text-muted); font-size: 1.02rem; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .lede code {
+    font-family: var(--font-mono);
+    font-size: 0.87rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .diagram-panel { padding: 1.25rem; overflow-x: auto; }
+  .diagram-panel svg { display: block; min-width: 1100px; width: 100%; height: auto; }
+
+  .boundary-label, .group-label {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    fill: var(--text-muted);
+  }
+  .boundary-label { font-size: 13px; font-weight: 600; }
+  .group-label { font-size: 10px; }
+
+  .boundary-box { fill: none; stroke: var(--border); stroke-width: 1.5; }
+  .group-box { fill: var(--surface-2); fill-opacity: 0.5; stroke: var(--border); stroke-width: 1; }
+
+  .uc-oval { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.3; }
+  .uc-oval.admin-only { stroke: var(--admin); }
+  .uc-oval.extend-oval { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3; }
+
+  .uc-text { font-size: 12px; fill: var(--text); text-anchor: middle; }
+  .uc-text.small { font-size: 10.5px; fill: var(--accent); }
+
+  .actor-symbol { fill: none; stroke: var(--text); stroke-width: 2; stroke-linecap: round; }
+  .actor-symbol.abstract { stroke-dasharray: 3 3; stroke: var(--text-muted); }
+  .actor-label { font-family: var(--font-mono); font-size: 12px; fill: var(--text); text-anchor: middle; }
+  .actor-label.abstract { fill: var(--text-muted); font-style: italic; }
+
+  .assoc-line { stroke: var(--text-muted); stroke-width: 1; opacity: 0.55; fill: none; }
+  .assoc-line.admin { stroke: var(--admin); opacity: 0.65; }
+  .gen-line { stroke: var(--text-muted); stroke-width: 1.3; fill: none; }
+  .rel-line { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 5 3; fill: none; }
+  .rel-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--accent);
+    text-anchor: middle;
+  }
+
+  figure { margin: 0; }
+  figcaption { margin-top: 0.75rem; color: var(--text-muted); font-size: 0.88rem; max-width: 65ch; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+  .swatch { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--text-muted); flex-shrink: 0; }
+  .swatch.admin-sw { border-color: var(--admin); }
+  .swatch.ext-sw { border: 1.5px dashed var(--accent); background: var(--accent-soft); }
+  .swatch.line-sw { width: 18px; height: 0; border-top: 1.5px dashed var(--accent); border-radius: 0; }
+
+  footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    max-width: 68ch;
+  }
+  footer code {
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">MatriClick · Diagrama de casos de uso</span>
+    <h1>Quién puede hacer qué en el sistema</h1>
+    <p class="lede">
+      A diferencia del diagrama anterior (que mostraba <strong>tablas de datos</strong>), este es
+      un <strong>diagrama de casos de uso</strong> de verdad: no muestra código ni base de
+      datos, sino <strong>actores</strong> (los tipos de usuario) y las <strong>acciones</strong>
+      que cada uno puede realizar en la aplicación. Se construyó a partir del control de acceso
+      real definido en <code>components/dashboard/sidebar.tsx</code> y <code>lib/supabase/middleware.ts</code>,
+      no de una suposición genérica.
+    </p>
+  </header>
+
+  <section>
+    <h2>Diagrama</h2>
+    <div class="panel diagram-panel">
+      <figure>
+        <svg viewBox="0 0 1450 860" role="img" aria-label="Diagrama de casos de uso de MatriClick: los actores Visitante, Administrador, Profesor, Acudiente y Estudiante, sus acciones disponibles agrupadas por sección del sistema, y las relaciones de generalización, inclusión y extensión entre ellos.">
+
+          <rect class="boundary-box" x="250" y="40" width="1120" height="760" rx="16"/>
+          <text class="boundary-label" x="270" y="66">Sistema MatriClick</text>
+
+          <rect class="group-box" x="280" y="70" width="410" height="210" rx="10"/>
+          <text class="group-label" x="296" y="88">Acceso público</text>
+
+          <rect class="group-box" x="740" y="70" width="600" height="210" rx="10"/>
+          <text class="group-label" x="756" y="88">Inicio y mi cuenta</text>
+
+          <rect class="group-box" x="280" y="310" width="410" height="180" rx="10"/>
+          <text class="group-label" x="296" y="328">Académico</text>
+
+          <rect class="group-box" x="740" y="310" width="600" height="180" rx="10"/>
+          <text class="group-label" x="756" y="328">Matrículas</text>
+
+          <rect class="group-box" x="280" y="520" width="410" height="170" rx="10"/>
+          <text class="group-label" x="296" y="538">Administración</text>
+
+          <rect class="group-box" x="740" y="520" width="600" height="250" rx="10"/>
+          <text class="group-label" x="756" y="538">Comunidad</text>
+
+          <line class="assoc-line" x1="85" y1="109" x2="300" y2="140"/>
+          <line class="assoc-line" x1="85" y1="109" x2="500" y2="140"/>
+          <line class="assoc-line" x1="85" y1="109" x2="300" y2="225"/>
+
+          <line class="assoc-line" x1="85" y1="279" x2="760" y2="135"/>
+          <line class="assoc-line" x1="85" y1="279" x2="995" y2="135"/>
+          <line class="assoc-line" x1="85" y1="279" x2="770" y2="225"/>
+          <line class="assoc-line" x1="85" y1="279" x2="985" y2="225"/>
+          <line class="assoc-line" x1="85" y1="279" x2="745" y2="360"/>
+
+          <line class="assoc-line admin" x1="185" y1="369" x2="300" y2="365"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="300" y2="565"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="305" y2="645"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="965" y2="360"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="835" y2="445"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="755" y2="570"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="975" y2="570"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="755" y2="650"/>
+          <line class="assoc-line admin" x1="185" y1="369" x2="860" y2="730"/>
+
+          <line class="assoc-line" x1="185" y1="489" x2="300" y2="445"/>
+          <line class="assoc-line" x1="185" y1="489" x2="975" y2="650"/>
+
+          <line class="assoc-line" x1="185" y1="609" x2="975" y2="650"/>
+          <line class="assoc-line" x1="185" y1="609" x2="1050" y2="386"/>
+
+          <path class="gen-line" d="M 170 340 L 70 308"/>
+          <path class="gen-line" d="M 170 460 L 70 308"/>
+          <path class="gen-line" d="M 170 580 L 70 308"/>
+          <path class="gen-line" d="M 170 700 L 70 308"/>
+          <polygon points="70,296 62,312 78,312" fill="var(--bg)" stroke="var(--text-muted)" stroke-width="1.3"/>
+
+          <path class="rel-line" d="M 685 225 L 480 225" marker-end="url(#arrow)"/>
+          <text class="rel-text" x="582" y="215">«extend»</text>
+
+          <path class="rel-line" d="M 860 103 C 780 40, 660 40, 585 114" marker-end="url(#arrow)"/>
+          <text class="rel-text" x="722" y="45">«include»</text>
+
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+
+          <ellipse class="uc-oval" cx="390" cy="140" rx="100" ry="32"/>
+          <text class="uc-text" x="390" y="140"><tspan x="390" dy="-4">Ver landing</tspan><tspan x="390" dy="14">pública</tspan></text>
+
+          <ellipse class="uc-oval" cx="585" cy="140" rx="90" ry="26"/>
+          <text class="uc-text" x="585" y="144">Iniciar sesión</text>
+
+          <ellipse class="uc-oval" cx="390" cy="225" rx="90" ry="26"/>
+          <text class="uc-text" x="390" y="229">Registrarse</text>
+
+          <ellipse class="uc-oval extend-oval" cx="585" cy="225" rx="90" ry="28"/>
+          <text class="uc-text" x="585" y="220" style="fill:var(--accent)"><tspan x="585" dy="-4">Vincular cuenta</tspan><tspan x="585" dy="14">automática</tspan></text>
+
+          <ellipse class="uc-oval" cx="860" cy="135" rx="105" ry="32"/>
+          <text class="uc-text" x="860" y="139">Ver panel de inicio</text>
+
+          <ellipse class="uc-oval" cx="1080" cy="135" rx="88" ry="26"/>
+          <text class="uc-text" x="1080" y="139">Cerrar sesión</text>
+
+          <ellipse class="uc-oval" cx="860" cy="225" rx="95" ry="26"/>
+          <text class="uc-text" x="860" y="229">Editar mi perfil</text>
+
+          <ellipse class="uc-oval" cx="1080" cy="225" rx="98" ry="26"/>
+          <text class="uc-text" x="1080" y="229">Cambiar contraseña</text>
+
+          <ellipse class="uc-oval" cx="390" cy="365" rx="100" ry="32"/>
+          <text class="uc-text" x="390" y="369"><tspan x="390" dy="-4">Ver catálogo</tspan><tspan x="390" dy="14">académico</tspan></text>
+
+          <ellipse class="uc-oval admin-only" cx="390" cy="445" rx="100" ry="32"/>
+          <text class="uc-text" x="390" y="449"><tspan x="390" dy="-4">Gestionar catálogo</tspan><tspan x="390" dy="14">académico</tspan></text>
+
+          <ellipse class="uc-oval" cx="830" cy="360" rx="85" ry="26"/>
+          <text class="uc-text" x="830" y="364">Ver matrículas</text>
+
+          <ellipse class="uc-oval" cx="1050" cy="360" rx="90" ry="26"/>
+          <text class="uc-text" x="1050" y="364">Crear matrícula</text>
+
+          <ellipse class="uc-oval admin-only" cx="940" cy="445" rx="105" ry="32"/>
+          <text class="uc-text" x="940" y="449"><tspan x="940" dy="-4">Cambiar estado</tspan><tspan x="940" dy="14">de matrícula</tspan></text>
+
+          <ellipse class="uc-oval admin-only" cx="390" cy="570" rx="88" ry="26"/>
+          <text class="uc-text" x="390" y="574">Gestionar sedes</text>
+
+          <ellipse class="uc-oval admin-only" cx="390" cy="645" rx="85" ry="26"/>
+          <text class="uc-text" x="390" y="649">Ver reportes</text>
+
+          <ellipse class="uc-oval admin-only" cx="850" cy="570" rx="98" ry="26"/>
+          <text class="uc-text" x="850" y="574">Gestionar profesores</text>
+
+          <ellipse class="uc-oval admin-only" cx="1070" cy="570" rx="98" ry="26"/>
+          <text class="uc-text" x="1070" y="574">Gestionar acudientes</text>
+
+          <ellipse class="uc-oval admin-only" cx="850" cy="650" rx="98" ry="26"/>
+          <text class="uc-text" x="850" y="654">Gestionar estudiantes</text>
+
+          <ellipse class="uc-oval" cx="1070" cy="650" rx="98" ry="26"/>
+          <text class="uc-text" x="1070" y="654">Consultar estudiantes</text>
+
+          <ellipse class="uc-oval admin-only" cx="960" cy="730" rx="100" ry="32"/>
+          <text class="uc-text" x="960" y="734"><tspan x="960" dy="-4">Vincular cuenta</tspan><tspan x="960" dy="14">a registro</tspan></text>
+
+          <g transform="translate(70,60)">
+            <circle class="actor-symbol" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label" x="70" y="134">Visitante</text>
+
+          <g transform="translate(70,220)">
+            <circle class="actor-symbol abstract" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol abstract" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol abstract" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol abstract" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol abstract" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label abstract" x="70" y="294"><tspan x="70">Usuario</tspan><tspan x="70" dy="14">autenticado</tspan></text>
+
+          <g transform="translate(170,340)">
+            <circle class="actor-symbol" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label" x="170" y="414">Admin</text>
+
+          <g transform="translate(170,460)">
+            <circle class="actor-symbol" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label" x="170" y="534">Profesor</text>
+
+          <g transform="translate(170,580)">
+            <circle class="actor-symbol" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label" x="170" y="654">Acudiente</text>
+
+          <g transform="translate(170,700)">
+            <circle class="actor-symbol" cx="0" cy="8" r="8"/>
+            <line class="actor-symbol" x1="0" y1="16" x2="0" y2="40"/>
+            <line class="actor-symbol" x1="-12" y1="24" x2="12" y2="24"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="-10" y2="58"/>
+            <line class="actor-symbol" x1="0" y1="40" x2="10" y2="58"/>
+          </g>
+          <text class="actor-label" x="170" y="774">Estudiante</text>
+
+        </svg>
+        <figcaption>
+          Las líneas ámbar salen únicamente de Admin: es el único actor que crea y modifica datos
+          sin restricción. Los demás roles heredan de "Usuario autenticado" (línea punteada) y
+          casi todos solo agregan acciones de <em>consulta</em> — con una excepción nueva:
+          Acudiente ahora también llega a "Crear matrícula" (línea gris, no ámbar), porque puede
+          disparar esa misma acción, solo que el resultado queda congelado en <code>Pendiente</code>
+          hasta que Admin lo revise. Estudiante sigue siendo el único sin ninguna línea propia.
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="swatch"></span> caso de uso disponible para varios roles</span>
+      <span class="legend-item"><span class="swatch admin-sw"></span> caso de uso exclusivo del rol admin</span>
+      <span class="legend-item"><span class="swatch ext-sw"></span> caso de uso opcional (extend)</span>
+      <span class="legend-item"><span class="swatch line-sw"></span> relación «include» / «extend»</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tres ideas de UML que vale la pena fijar aquí</h2>
+    <p class="lede">
+      <strong>Generalización</strong> (la línea sólida con punta hueca): Admin, Profesor,
+      Acudiente y Estudiante no repiten "puede ver su inicio, puede editar su perfil" cada uno
+      por separado — todos heredan ese comportamiento de un actor abstracto común, "Usuario
+      autenticado". Es la misma idea de reutilización que ves en código al no repetir lógica.
+    </p>
+    <p class="lede">
+      <strong>«include»</strong> (flecha punteada, siempre obligatoria): "Ver panel de inicio"
+      <em>siempre</em> incluye "Iniciar sesión" como paso previo — no se puede dar el primero sin
+      el segundo. Refleja el guard real en <code>proxy.ts</code>, que redirige a cualquiera sin
+      sesión antes de llegar al dashboard.
+    </p>
+    <p class="lede">
+      <strong>«extend»</strong> (flecha punteada, opcional): "Vincular cuenta automática" extiende
+      "Registrarse" pero solo ocurre <em>a veces</em> — cuando el documento ingresado ya existía
+      en <code>estudiantes</code>/<code>acudientes</code>. Si no hay coincidencia, el registro
+      ocurre igual, simplemente sin ese paso extra.
+    </p>
+    <p class="lede">
+      <strong>Un mismo caso de uso, dos actores, dos resultados</strong> (novedad): tanto Admin
+      como Acudiente llegan a "Crear matrícula" — es la misma acción del sistema — pero la matrícula
+      que resulta no es igual: la de Admin nace <code>Activa</code>, la de Acudiente nace
+      <code>Pendiente</code> y no cuenta como cupo ocupado hasta que Admin la mueve a
+      <code>Activa</code> en "Cambiar estado de matrícula". El diagrama de casos de uso no separa
+      esto en dos ovalos porque, para el negocio, sigue siendo <em>una</em> capacidad ("puedo
+      registrar una matrícula") — la diferencia de permisos vive en el código
+      (<code>crearMatricula</code> vs. <code>crearSolicitudMatricula</code> en
+      <code>lib/actions/matriculas.ts</code>), no en el modelo de casos de uso.
+    </p>
+  </section>
+
+  <footer>
+    Este diagrama describe <em>capacidades</em> (qué puede iniciar cada actor), no la base de
+    datos. Para ver qué tablas y columnas hay detrás de cada caso de uso, ese es el otro
+    diagrama (entidad-relación) que ya vimos — los dos se complementan: uno explica el
+    <em>quién y para qué</em>, el otro el <em>qué se guarda</em>.
+  </footer>
+</div>
+</body>
+</html>
