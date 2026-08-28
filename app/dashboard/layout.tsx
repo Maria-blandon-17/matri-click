@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 
 import { getPerfilActual } from "@/lib/actions/perfil"
 import { getMatriculasPendientesCount } from "@/lib/actions/matriculas"
+import { getCuentasPendientesCount } from "@/lib/actions/cuentas-pendientes"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Topbar } from "@/components/dashboard/topbar"
 
@@ -16,8 +17,15 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  const pendientesMatriculas =
-    perfil.rol === "admin" ? await getMatriculasPendientesCount() : 0
+  const [pendientesMatriculas, pendientesCuentas] =
+    perfil.rol === "admin"
+      ? await Promise.all([getMatriculasPendientesCount(), getCuentasPendientesCount()])
+      : [0, 0]
+
+  const badges = {
+    "/dashboard/matriculas": pendientesMatriculas,
+    "/dashboard/administracion/cuentas-pendientes": pendientesCuentas,
+  }
 
   return (
     <div
@@ -29,13 +37,14 @@ export default async function DashboardLayout({
         backgroundAttachment: "fixed",
       }}
     >
-      <Sidebar rol={perfil.rol} pendientesMatriculas={pendientesMatriculas} />
+      <Sidebar rol={perfil.rol} badges={badges} />
       <div className="flex flex-1 flex-col md:ml-[260px]">
         <Topbar
           nombre={perfil.nombre_completo}
           correo={perfil.email}
           rol={perfil.rol}
           pendientesMatriculas={pendientesMatriculas}
+          badges={badges}
         />
         <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-5 p-4 sm:p-6">
           {children}

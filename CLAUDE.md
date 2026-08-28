@@ -102,22 +102,32 @@ Tablas: `sedes, grados, grupos, periodos_academicos, profesores, acudientes, est
 matriculas, perfiles`. `perfiles` vincula `auth.users` con un `rol` (`admin | profesor |
 acudiente | estudiante`) y opcionalmente con `id_profesor`/`id_acudiente`/`id_estudiante`.
 
-- Registro público (`/registro`) solo permite rol `acudiente` o `estudiante`. Admin y profesores
-  se crean a mano vía Supabase Admin API (no hay UI para esto todavía — ver
+- Registro público (`/registro`) permite los 3 roles no-admin: `acudiente`, `estudiante` y
+  `profesor`. Admin sigue creándose a mano vía Supabase Admin API (no hay UI para esto — ver
   `ROADMAP.md`).
-- **Vinculación automática por documento (bug ya corregido):** al registrarse, se busca el
-  documento ingresado en `estudiantes`/`acudientes` para conectar la cuenta nueva con el registro
-  existente. Esta búsqueda vivía originalmente en `lib/actions/auth.ts` usando el cliente
-  normal (con RLS) — **nunca funcionaba para nadie**, porque no existe ninguna política RLS que
-  permita a una cuenta recién creada (aún sin vincular) leer `acudientes`/`estudiantes` — problema
-  de huevo y gallina. Se corrigió usando `createAdminClient()` (service role) solo para esa
-  búsqueda puntual y el update del propio perfil recién creado. Si se toca ese flujo de nuevo,
-  no volver a cambiarlo al cliente con RLS.
-- **Vinculación manual desde el dashboard:** además del autoregistro, el admin puede vincular una
-  cuenta ya registrada (pero sin vincular) directamente desde las pantallas de
-  `Estudiantes`/`Administración → Acudientes`/`Administración → Profesores` — columna "Cuenta"
-  (`components/dashboard/cuenta-vinculo-cell.tsx`, acciones en `lib/actions/cuentas.ts`). Sirve
-  para el caso en que alguien se registró antes de que el admin creara su registro académico.
+- **Vinculación automática por documento:** al registrarse, se busca el documento ingresado en
+  `estudiantes`/`acudientes`/`profesores` (según el rol elegido) para conectar la cuenta nueva con
+  el registro existente. Esta búsqueda usa `createAdminClient()` (service role) a propósito: una
+  cuenta recién creada y aún sin vincular no tiene ninguna política RLS que le permita leer esas
+  tablas — problema de huevo y gallina. Si no hay coincidencia, el documento igual queda guardado
+  en `perfiles.documento` (no se pierde) para que el admin lo revise después en "Cuentas
+  pendientes". No volver a cambiar esa búsqueda al cliente con RLS.
+- **"Cuentas pendientes" (admin, `/dashboard/administracion/cuentas-pendientes`):** lista todas
+  las cuentas sin vincular (acudiente/profesor/estudiante juntos), con badge en el sidebar
+  (`lib/actions/cuentas-pendientes.ts`). Tres acciones por fila: **Aceptar** (crea la ficha
+  académica con lo ya conocido — nombre/documento/correo — y la vincula; para acudiente/estudiante
+  rellena con un valor provisional los campos obligatorios que el registro no pregunta, y la
+  persona los corrige después desde "Mi perfil"), **Rechazar** (`perfiles.rechazado = true`, no se
+  le crea ficha nunca), **Descartar** (borra la cuenta por completo). Ver detalle completo en
+  `ROADMAP.md`.
+- **Vinculación manual desde el dashboard:** alternativa a "Cuentas pendientes" cuando el admin ya
+  creó la ficha académica de antemano — vincula una cuenta ya registrada directamente desde las
+  pantallas de `Estudiantes`/`Administración → Acudientes`/`Administración → Profesores` — columna
+  "Cuenta" (`components/dashboard/cuenta-vinculo-cell.tsx`, acciones en `lib/actions/cuentas.ts`).
+- **Autoedición de la propia ficha:** desde "Mi perfil" (`/dashboard/cuentas`), cada rol vinculado
+  puede corregir sus propios datos académicos (nombres, apellidos, teléfono, tipo de documento,
+  parentesco, fecha de nacimiento, género según el rol) — nunca su `documento`, que solo admin
+  puede cambiar (forzado por un trigger de Postgres, no por RLS — ver `ROADMAP.md` para el porqué).
 - RLS activo en todas las tablas: admin ve todo, profesor solo sus grupos/estudiantes/matrículas
   (y sin permiso de escritura en ninguna tabla salvo lo que RLS le explicite — hoy solo lectura),
   acudiente solo su(s) estudiante(s) (sin escritura), estudiante solo su propio registro (sin

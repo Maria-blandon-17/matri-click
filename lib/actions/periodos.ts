@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { periodoSchema } from "@/lib/validations/catalogos"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 
 export async function getPeriodos() {
   const supabase = await createClient()
@@ -74,12 +75,12 @@ export async function actualizarPeriodo(
   return { message: "ok" }
 }
 
-export async function eliminarPeriodo(id: string) {
+export async function eliminarPeriodo(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase
     .from("periodos_academicos")
     .delete()
     .eq("id_periodo", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/academico/periodos")
 }

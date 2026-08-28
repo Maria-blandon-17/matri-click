@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { estudianteSchema } from "@/lib/validations/personas"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 import type { Database } from "@/lib/types/database.types"
 
 export type EstudianteConAcudiente = Database["public"]["Tables"]["estudiantes"]["Row"] & {
@@ -92,9 +93,9 @@ export async function actualizarEstudiante(
   return { message: "ok" }
 }
 
-export async function eliminarEstudiante(id: string) {
+export async function eliminarEstudiante(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase.from("estudiantes").delete().eq("id_estudiante", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/estudiantes")
 }

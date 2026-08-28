@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { acudienteSchema } from "@/lib/validations/personas"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 
 export async function getAcudientes() {
   const supabase = await createClient()
@@ -83,9 +84,9 @@ export async function actualizarAcudiente(
   return { message: "ok" }
 }
 
-export async function eliminarAcudiente(id: string) {
+export async function eliminarAcudiente(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase.from("acudientes").delete().eq("id_acudiente", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/administracion/acudientes")
 }

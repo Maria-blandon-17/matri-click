@@ -1,9 +1,12 @@
 import type { LucideIcon } from "lucide-react"
-import { TriangleAlert, IdCard, Phone, Mail, MapPin, Cake, School, Users2 } from "lucide-react"
+import { TriangleAlert, IdCard } from "lucide-react"
 
 import { getPerfilActual, getRegistroVinculado } from "@/lib/actions/perfil"
 import { PerfilNombreForm } from "@/components/dashboard/cuenta/perfil-nombre-form"
 import { CambiarPasswordDialog } from "@/components/dashboard/cuenta/cambiar-password-dialog"
+import { FichaProfesorForm } from "@/components/dashboard/cuenta/ficha-profesor-form"
+import { FichaAcudienteForm } from "@/components/dashboard/cuenta/ficha-acudiente-form"
+import { FichaEstudianteForm } from "@/components/dashboard/cuenta/ficha-estudiante-form"
 import type { RolUsuario } from "@/lib/types/database.types"
 
 function iniciales(nombre: string | null) {
@@ -112,54 +115,48 @@ export default async function CuentasPage() {
 
           {registro && (
             <div className="glass-card rounded-2xl p-8">
-              <h3 className="mb-6 flex items-center gap-2 text-lg font-medium">
+              <h3 className="mb-2 flex items-center gap-2 text-lg font-medium">
                 <IdCard className="size-5 text-muted-foreground" />
-                Datos vinculados
+                Datos académicos
               </h3>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="mb-6 max-w-md">
                 <CampoSoloLectura icon={IdCard} label="Documento" value={registro.documento} />
-
-                {registro.tipo === "profesor" && (
-                  <>
-                    <CampoSoloLectura icon={Phone} label="Teléfono" value={registro.telefono ?? "—"} />
-                    <CampoSoloLectura
-                      icon={Mail}
-                      label="Correo institucional"
-                      value={registro.correo_electronico ?? "—"}
-                    />
-                  </>
-                )}
-
-                {registro.tipo === "acudiente" && (
-                  <>
-                    <CampoSoloLectura icon={Users2} label="Parentesco" value={registro.parentesco} />
-                    <CampoSoloLectura icon={Phone} label="Teléfono" value={registro.telefono ?? "—"} />
-                    <CampoSoloLectura
-                      icon={MapPin}
-                      label="Dirección"
-                      value={registro.direccion ?? "—"}
-                    />
-                  </>
-                )}
-
-                {registro.tipo === "estudiante" && (
-                  <>
-                    <CampoSoloLectura
-                      icon={Cake}
-                      label="Fecha de nacimiento"
-                      value={new Date(registro.fecha_nacimiento).toLocaleDateString("es-CO")}
-                    />
-                    <CampoSoloLectura
-                      icon={School}
-                      label="Estado académico"
-                      value={registro.estado_estudiante}
-                    />
-                  </>
-                )}
               </div>
+
+              {registro.tipo === "profesor" && (
+                <FichaProfesorForm
+                  nombres={registro.nombres}
+                  apellidos={registro.apellidos}
+                  telefono={registro.telefono}
+                  correoElectronico={registro.correo_electronico}
+                />
+              )}
+
+              {registro.tipo === "acudiente" && (
+                <FichaAcudienteForm
+                  tipoDocumento={registro.tipo_documento}
+                  nombres={registro.nombres}
+                  apellidos={registro.apellidos}
+                  telefono={registro.telefono}
+                  correoElectronico={registro.correo_electronico}
+                  direccion={registro.direccion}
+                  parentesco={registro.parentesco}
+                />
+              )}
+
+              {registro.tipo === "estudiante" && (
+                <FichaEstudianteForm
+                  tipoDocumento={registro.tipo_documento}
+                  nombres={registro.nombres}
+                  apellidos={registro.apellidos}
+                  fechaNacimiento={registro.fecha_nacimiento}
+                  genero={registro.genero}
+                />
+              )}
+
               <p className="mt-4 text-xs text-muted-foreground">
-                Estos datos son de solo lectura. Si necesitas corregir algo, contacta al
-                administrador.
+                El documento no se puede cambiar aquí — si está mal, contacta al administrador.
+                El resto de estos datos puedes corregirlos tú mismo cuando quieras.
               </p>
             </div>
           )}

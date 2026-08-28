@@ -199,6 +199,8 @@ export interface Database {
           id: string
           rol: RolUsuario
           nombre_completo: string | null
+          documento: string | null
+          rechazado: boolean
           id_profesor: string | null
           id_acudiente: string | null
           id_estudiante: string | null
@@ -208,6 +210,8 @@ export interface Database {
           id: string
           rol: RolUsuario
           nombre_completo?: string | null
+          documento?: string | null
+          rechazado?: boolean
           id_profesor?: string | null
           id_acudiente?: string | null
           id_estudiante?: string | null

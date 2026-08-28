@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { sedeSchema } from "@/lib/validations/catalogos"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 
 export async function getSedes() {
   const supabase = await createClient()
@@ -70,9 +71,9 @@ export async function actualizarSede(
   return { message: "ok" }
 }
 
-export async function eliminarSede(id: string) {
+export async function eliminarSede(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase.from("sedes").delete().eq("id_sede", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/administracion/sedes")
 }

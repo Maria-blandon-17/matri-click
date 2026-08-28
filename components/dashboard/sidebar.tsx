@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Building2,
   Users,
+  UserPlus,
   ClipboardList,
   BarChart3,
   UserCircle,
@@ -42,6 +43,11 @@ const nav = [
     items: [
       { href: "/dashboard/administracion/sedes", label: "Sedes", icon: Building2 },
       { href: "/dashboard/matriculas", label: "Matrículas", icon: ClipboardList, roles: TODOS_LOS_ROLES },
+      {
+        href: "/dashboard/administracion/cuentas-pendientes",
+        label: "Cuentas pendientes",
+        icon: UserPlus,
+      },
     ],
   },
   {
@@ -74,11 +80,11 @@ const nav = [
 export function SidebarNavContent({
   onNavigate,
   rol,
-  pendientesMatriculas = 0,
+  badges = {},
 }: {
   onNavigate?: () => void
   rol: RolUsuario
-  pendientesMatriculas?: number
+  badges?: Record<string, number>
 }) {
   const pathname = usePathname()
   const seccionesVisibles = nav
@@ -111,9 +117,9 @@ export function SidebarNavContent({
               >
                 <item.icon className="size-4.5" />
                 {item.label}
-                {item.href === "/dashboard/matriculas" && pendientesMatriculas > 0 && (
+                {(badges[item.href] ?? 0) > 0 && (
                   <span className="font-label-mono ml-auto rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-                    {pendientesMatriculas}
+                    {badges[item.href]}
                   </span>
                 )}
               </Link>
@@ -128,11 +134,11 @@ export function SidebarNavContent({
 export function SidebarContent({
   onNavigate,
   rol,
-  pendientesMatriculas = 0,
+  badges = {},
 }: {
   onNavigate?: () => void
   rol: RolUsuario
-  pendientesMatriculas?: number
+  badges?: Record<string, number>
 }) {
   return (
     <>
@@ -146,11 +152,7 @@ export function SidebarContent({
         </div>
       </div>
 
-      <SidebarNavContent
-        onNavigate={onNavigate}
-        rol={rol}
-        pendientesMatriculas={pendientesMatriculas}
-      />
+      <SidebarNavContent onNavigate={onNavigate} rol={rol} badges={badges} />
 
       <div className="group relative mt-4 cursor-default overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/20 to-transparent p-4">
         <div className="relative z-10 flex items-center gap-3">
@@ -169,14 +171,14 @@ export function SidebarContent({
 
 export function Sidebar({
   rol,
-  pendientesMatriculas = 0,
+  badges = {},
 }: {
   rol: RolUsuario
-  pendientesMatriculas?: number
+  badges?: Record<string, number>
 }) {
   return (
     <aside className="fixed top-0 left-0 z-40 hidden h-full w-[260px] flex-col gap-4 border-r border-white/10 bg-card/60 p-4 shadow-2xl backdrop-blur-xl md:flex">
-      <SidebarContent rol={rol} pendientesMatriculas={pendientesMatriculas} />
+      <SidebarContent rol={rol} badges={badges} />
     </aside>
   )
 }

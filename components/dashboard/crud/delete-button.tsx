@@ -16,12 +16,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import type { DeleteResult } from "@/lib/actions/types"
 
 export function DeleteButton({
   action,
   itemLabel,
 }: {
-  action: () => Promise<void>
+  action: () => Promise<DeleteResult>
   itemLabel: string
 }) {
   const [pending, startTransition] = useTransition()
@@ -50,16 +51,18 @@ export function DeleteButton({
           <AlertDialogCancel className="border-white/10">Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
-            className="bg-destructive text-white hover:bg-destructive/90"
+            className="bg-red-600 text-white hover:bg-red-500"
             onClick={() => {
               startTransition(async () => {
                 try {
-                  await action()
+                  const result = await action()
+                  if (result?.error) {
+                    toast.error(result.error)
+                    return
+                  }
                   toast.success("Eliminado correctamente.")
-                } catch (error) {
-                  toast.error(
-                    error instanceof Error ? error.message : "No se pudo eliminar."
-                  )
+                } catch {
+                  toast.error("No se pudo eliminar. Intenta de nuevo.")
                 }
               })
             }}

@@ -13,6 +13,7 @@ import {
   EyeOff,
   Users,
   GraduationCap,
+  School,
   ArrowRight,
 } from "lucide-react"
 
@@ -30,8 +31,10 @@ const inputClassName =
 export default function RegistroPage() {
   const [state, action, pending] = useActionState(registro, initialState)
   const [showPassword, setShowPassword] = useState(false)
-  const [rol, setRol] = useState<"acudiente" | "estudiante">(
-    state?.values?.rol === "estudiante" ? "estudiante" : "acudiente"
+  const [rol, setRol] = useState<"acudiente" | "estudiante" | "profesor">(
+    state?.values?.rol === "estudiante" || state?.values?.rol === "profesor"
+      ? state.values.rol
+      : "acudiente"
   )
 
   useEffect(() => {
@@ -126,28 +129,39 @@ export default function RegistroPage() {
               Tipo de usuario
             </FieldLabel>
             <input type="hidden" name="rol" value={rol} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setRol("acudiente")}
                 className={cn(
-                  "flex h-12 items-center justify-center gap-2 rounded-lg border border-white/10 transition-colors",
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
                   rol === "acudiente" && "border-primary bg-primary/10 text-primary"
                 )}
               >
-                <Users className="size-5" />
+                <Users className="size-4.5 sm:size-5" />
                 <span>Acudiente</span>
               </button>
               <button
                 type="button"
                 onClick={() => setRol("estudiante")}
                 className={cn(
-                  "flex h-12 items-center justify-center gap-2 rounded-lg border border-white/10 transition-colors",
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
                   rol === "estudiante" && "border-primary bg-primary/10 text-primary"
                 )}
               >
-                <GraduationCap className="size-5" />
+                <GraduationCap className="size-4.5 sm:size-5" />
                 <span>Estudiante</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRol("profesor")}
+                className={cn(
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
+                  rol === "profesor" && "border-primary bg-primary/10 text-primary"
+                )}
+              >
+                <School className="size-4.5 sm:size-5" />
+                <span>Profesor</span>
               </button>
             </div>
             <FieldError errors={state?.errors?.rol?.map((message) => ({ message }))} />

@@ -5,6 +5,73 @@ implementado y verificado (`tsc` + `eslint` + `next build` limpios); lo marcado 
 acción externa al código (pago, cuenta de terceros) y queda bloqueado hasta que se resuelva
 afuera; lo marcado 💡 es aspiracional a futuro, sin fecha.
 
+## Errores de "Eliminar" no llegaban al usuario (✅ resuelto)
+
+Al intentar borrar un profesor que dirige un grupo (o cualquier registro referenciado por otra
+tabla — un grado con grupos, un estudiante con matrículas, etc.), en producción aparecía un
+"Minified React error #441" sin sentido en vez del motivo real. Causa raíz: las 8 funciones
+`eliminarX` (`lib/actions/{grados,sedes,grupos,periodos,profesores,acudientes,estudiantes,
+matriculas}.ts`) usaban `throw new Error(error.message)` dentro de una Server Action — Next.js
+**redacta el mensaje de cualquier error que se lance (`throw`) desde una Server Action en
+producción**, por seguridad (para no filtrar detalles internos por accidente), y lo reemplaza por
+ese mensaje genérico con un "digest". En local (`next dev`) nunca se notaba porque ahí sí se ve
+el mensaje completo — el bug solo existía en producción.
+
+Arreglo: cambiar el patrón de "lanzar" a "retornar" el error, igual que ya hacían
+`crearX`/`actualizarX` (`return { message: error.message }`) desde el principio — un valor de
+retorno normal nunca se redacta, solo las excepciones. `DeleteButton`
+(`components/dashboard/crud/delete-button.tsx`) ahora espera `Promise<DeleteResult>`
+(`{ error?: string } | undefined`) en vez de confiar en un `catch`. Mismo arreglo aplicado a
+`aceptarCuenta`/`rechazarCuenta`/`descartarCuenta` (`lib/actions/cuentas-pendientes.ts`), que
+tenían el mismo problema.
+
+De paso, `mensajeErrorEliminar()` (`lib/actions/types.ts`) traduce el código `23503`
+(foreign_key_violation) de Postgres a un mensaje en español que nombra qué lo está bloqueando
+("No se puede eliminar: todavía hay grupos que dependen de esto..."), en vez de mostrar el
+mensaje técnico de Postgres tal cual.
+
+También se corrigió el contraste del botón "Eliminar" del diálogo de confirmación: usaba
+`bg-destructive` (`#ffb4ab`, un salmón claro pensado como *color de texto* sobre fondo oscuro,
+no como relleno de botón — así lo usa correctamente `EstadoMatriculaBadge` en "Cancelada") con
+texto blanco encima, ilegible. Ahora usa `bg-red-600`/`hover:bg-red-500` con texto blanco.
+
+## Autoregistro con profesor + "Cuentas pendientes" (✅ resuelto)
+
+Antes, solo admin y profesores se creaban a mano vía API, y el auto-vínculo por documento
+dependía de que el admin ya hubiera creado la ficha académica con el documento **exacto** de
+antemano (frágil: un dígito distinto y nunca vinculaba). Se dio vuelta el flujo:
+
+- `/registro` ahora tiene 3 opciones (Acudiente/Estudiante/**Profesor**) — `lib/validations/auth.ts`,
+  `lib/actions/auth.ts`. El registro público de profesor es intencional: la ficha de `profesores`
+  no exige datos que el formulario de registro no pida (a diferencia de acudiente/estudiante), así
+  que no hace falta nada provisional para ese rol.
+- `perfiles` gana columna `documento` (migración `0008_cuentas_pendientes.sql`) — se guarda
+  siempre al registrarse, haya o no coincidencia con una ficha existente. Sin esto, un documento
+  sin match se perdía para siempre.
+- Pantalla nueva **`/dashboard/administracion/cuentas-pendientes`** (admin) + badge ámbar en el
+  sidebar (mecanismo genérico `badges: Record<href, count>` en `sidebar.tsx`, ya no específico a
+  matrículas). Junta acudiente/profesor/estudiante sin ficha en una sola lista
+  (`lib/actions/cuentas-pendientes.ts`).
+- Tres acciones por fila: **Aceptar** (crea la ficha con nombre/documento/correo ya conocidos;
+  para acudiente/estudiante, los campos obligatorios que el registro no pregunta —tipo de
+  documento, parentesco, fecha de nacimiento, género— quedan con un valor provisional para que la
+  persona los corrija ella misma después), **Rechazar** (marca `perfiles.rechazado = true`, la
+  cuenta sigue existiendo pero desaparece de la lista y nunca se le crea ficha), **Descartar**
+  (borra la cuenta por completo — perfil + usuario de auth).
+- **"Mi perfil" ahora permite autoedición** de la ficha vinculada (antes 100% solo lectura):
+  `components/dashboard/cuenta/ficha-{profesor,acudiente,estudiante}-form.tsx` +
+  `actualizarMiFicha{Profesor,Acudiente,Estudiante}` en `lib/actions/mi-perfil.ts`. El documento
+  nunca es editable ahí — lo protege un trigger de Postgres
+  (`bloquear_campos_protegidos_{profesor,acudiente,estudiante}`, migración `0008`) que rechaza el
+  cambio de documento/estado/id salvo que `rol_actual() = 'admin'`. Necesario porque RLS solo
+  filtra filas, no columnas, y admin usa el mismo rol de Postgres `authenticated` que todos los
+  demás — la única forma de dejar "documento intocable salvo por admin" es a nivel de trigger, no
+  de GRANT de columna (un `REVOKE`/`GRANT` de columna afectaría a admin también, porque
+  Postgres no distingue nuestro `rol` de aplicación).
+- Migración `0008` sin aplicar todavía en producción — correrla en el SQL Editor de Supabase (esta
+  sí puede ir completa en un solo `Run`, a diferencia de la `0007`/`0007b`, porque no agrega
+  ningún valor de enum).
+
 ## Solicitud de matrícula por el acudiente (✅ resuelto)
 
 Antes solo el admin podía crear matrículas. Ahora el acudiente también puede, desde

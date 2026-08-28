@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { grupoSchema } from "@/lib/validations/catalogos"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 
 export type GrupoConRelaciones = {
   id_grupo: string
@@ -95,9 +96,9 @@ export async function actualizarGrupo(
   return { message: "ok" }
 }
 
-export async function eliminarGrupo(id: string) {
+export async function eliminarGrupo(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase.from("grupos").delete().eq("id_grupo", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/academico/grupos")
 }

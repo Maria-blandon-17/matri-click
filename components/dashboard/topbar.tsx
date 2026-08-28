@@ -28,11 +28,13 @@ export function Topbar({
   correo,
   rol,
   pendientesMatriculas = 0,
+  badges = {},
 }: {
   nombre?: string | null
   correo?: string | null
   rol: RolUsuario
   pendientesMatriculas?: number
+  badges?: Record<string, number>
 }) {
   const nombreMostrado = nombre || correo || "tu cuenta"
   const fecha = new Date()
@@ -42,7 +44,7 @@ export function Topbar({
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-white/5 bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-4">
-        <MobileSidebar rol={rol} pendientesMatriculas={pendientesMatriculas} />
+        <MobileSidebar rol={rol} badges={badges} />
         <div>
           <p className="font-label-mono mb-1 text-[11px] tracking-widest text-muted-foreground">
             {fecha}

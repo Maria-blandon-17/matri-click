@@ -23,9 +23,18 @@ export async function getPerfilActual() {
 }
 
 export type RegistroVinculado =
-  | ({ tipo: "profesor" } & { documento: string; telefono: string | null; correo_electronico: string | null })
+  | ({ tipo: "profesor" } & {
+      documento: string
+      nombres: string
+      apellidos: string
+      telefono: string | null
+      correo_electronico: string | null
+    })
   | ({ tipo: "acudiente" } & {
       documento: string
+      tipo_documento: string
+      nombres: string
+      apellidos: string
       telefono: string | null
       direccion: string | null
       parentesco: string
@@ -33,6 +42,9 @@ export type RegistroVinculado =
     })
   | ({ tipo: "estudiante" } & {
       documento: string
+      tipo_documento: string
+      nombres: string
+      apellidos: string
       fecha_nacimiento: string
       genero: string
       estado_estudiante: string
@@ -47,7 +59,7 @@ export async function getRegistroVinculado(
   if (rol === "profesor" && ids.id_profesor) {
     const { data } = await supabase
       .from("profesores")
-      .select("documento, telefono, correo_electronico")
+      .select("documento, nombres, apellidos, telefono, correo_electronico")
       .eq("id_profesor", ids.id_profesor)
       .maybeSingle()
     return data ? { tipo: "profesor", ...data } : null
@@ -56,7 +68,7 @@ export async function getRegistroVinculado(
   if (rol === "acudiente" && ids.id_acudiente) {
     const { data } = await supabase
       .from("acudientes")
-      .select("documento, telefono, direccion, parentesco, correo_electronico")
+      .select("documento, tipo_documento, nombres, apellidos, telefono, direccion, parentesco, correo_electronico")
       .eq("id_acudiente", ids.id_acudiente)
       .maybeSingle()
     return data ? { tipo: "acudiente", ...data } : null
@@ -65,7 +77,7 @@ export async function getRegistroVinculado(
   if (rol === "estudiante" && ids.id_estudiante) {
     const { data } = await supabase
       .from("estudiantes")
-      .select("documento, fecha_nacimiento, genero, estado_estudiante")
+      .select("documento, tipo_documento, nombres, apellidos, fecha_nacimiento, genero, estado_estudiante")
       .eq("id_estudiante", ids.id_estudiante)
       .maybeSingle()
     return data ? { tipo: "estudiante", ...data } : null

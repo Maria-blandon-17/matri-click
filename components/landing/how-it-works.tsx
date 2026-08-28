@@ -2,7 +2,7 @@ const steps = [
   {
     number: "1",
     title: "Regístrate",
-    description: "Crea tu cuenta como acudiente o estudiante en pocos minutos.",
+    description: "Crea tu cuenta como acudiente, estudiante o profesor en pocos minutos.",
   },
   {
     number: "2",
@@ -12,7 +12,7 @@ const steps = [
   {
     number: "3",
     title: "Matricula o consulta",
-    description: "El administrador gestiona tu matrícula y tú haces seguimiento desde tu cuenta.",
+    description: "Solicita la matrícula desde tu cuenta o consúltala — el administrador la revisa y aprueba.",
   },
   {
     number: "4",

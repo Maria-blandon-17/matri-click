@@ -18,8 +18,8 @@ export const registroSchema = z
       .string()
       .min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
     confirmPassword: z.string(),
-    rol: z.enum(["acudiente", "estudiante"], {
-      message: "Selecciona si eres acudiente o estudiante.",
+    rol: z.enum(["acudiente", "estudiante", "profesor"], {
+      message: "Selecciona tu tipo de cuenta.",
     }),
     documento: z
       .string()

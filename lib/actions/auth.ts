@@ -83,41 +83,32 @@ export async function registro(
   }
 
   if (data.user) {
-    // Vincula el perfil recién creado con el estudiante/acudiente existente por documento.
-    // Usa el cliente admin (bypassa RLS) a propósito: un usuario recién registrado y aún sin
-    // vincular no tiene ninguna política de lectura sobre "acudientes"/"estudiantes" (solo
-    // admin, o el propio registro una vez ya vinculado), así que con el cliente normal esta
-    // búsqueda siempre devolvía cero filas y el auto-link nunca ocurría. El alcance queda
-    // acotado: solo lee por documento exacto y solo actualiza el perfil recién creado.
+    // Vincula el perfil recién creado con el estudiante/acudiente/profesor existente por
+    // documento. Usa el cliente admin (bypassa RLS) a propósito: un usuario recién registrado
+    // y aún sin vincular no tiene ninguna política de lectura sobre esas tablas (solo admin, o
+    // el propio registro una vez ya vinculado), así que con el cliente normal esta búsqueda
+    // siempre devolvía cero filas y el auto-link nunca ocurría. El alcance queda acotado: solo
+    // lee por documento exacto y solo actualiza el perfil recién creado.
+    // El documento se guarda siempre en el perfil, haya o no coincidencia — si no la hay, la
+    // cuenta queda "pendiente" y un admin la revisa desde /dashboard/administracion/cuentas-pendientes.
     const admin = createAdminClient()
+    const tabla = rol === "acudiente" ? "acudientes" : rol === "profesor" ? "profesores" : "estudiantes"
+    const columnaId =
+      rol === "acudiente" ? "id_acudiente" : rol === "profesor" ? "id_profesor" : "id_estudiante"
 
-    if (rol === "acudiente") {
-      const { data: match } = await admin
-        .from("acudientes")
-        .select("id_acudiente")
-        .eq("documento", documento)
-        .maybeSingle()
+    const { data: match } = (await admin
+      .from(tabla)
+      .select(columnaId)
+      .eq("documento", documento)
+      .maybeSingle()) as unknown as { data: Record<string, string> | null }
 
-      if (match) {
-        await admin
-          .from("perfiles")
-          .update({ id_acudiente: match.id_acudiente })
-          .eq("id", data.user.id)
-      }
-    } else {
-      const { data: match } = await admin
-        .from("estudiantes")
-        .select("id_estudiante")
-        .eq("documento", documento)
-        .maybeSingle()
-
-      if (match) {
-        await admin
-          .from("perfiles")
-          .update({ id_estudiante: match.id_estudiante })
-          .eq("id", data.user.id)
-      }
-    }
+    await admin
+      .from("perfiles")
+      .update({
+        documento,
+        ...(match ? { [columnaId]: match[columnaId] } : {}),
+      })
+      .eq("id", data.user.id)
   }
 
   return {

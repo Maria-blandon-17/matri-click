@@ -5,7 +5,8 @@ import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import { matriculaSchema, estadoMatriculaSchema } from "@/lib/validations/matriculas"
-import type { CrudFormState } from "@/lib/actions/types"
+import type { CrudFormState, DeleteResult } from "@/lib/actions/types"
+import { mensajeErrorEliminar } from "@/lib/actions/types"
 import type { EstadoMatricula } from "@/lib/types/database.types"
 
 export type MatriculaConRelaciones = {
@@ -222,10 +223,10 @@ export async function actualizarEstadoMatricula(
   return { message: "ok" }
 }
 
-export async function eliminarMatricula(id: string) {
+export async function eliminarMatricula(id: string): Promise<DeleteResult> {
   const supabase = await createClient()
   const { error } = await supabase.from("matriculas").delete().eq("id_matricula", id)
-  if (error) throw new Error(error.message)
+  if (error) return { error: mensajeErrorEliminar(error) }
   revalidatePath("/dashboard/matriculas")
   revalidatePath("/dashboard/inicio")
 }
