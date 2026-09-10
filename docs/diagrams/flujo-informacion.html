@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujo de Información MatriClick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg: #eef0f7;
+    --surface: #ffffff;
+    --surface-2: #e4e6f2;
+    --text: #171a2b;
+    --text-muted: #5c6178;
+    --border: #d7d9e8;
+    --accent: #4f46e5;
+    --accent-soft: #ebe9fd;
+    --client: #0f766e;
+    --client-soft: #e3f4f1;
+    --server: #4f46e5;
+    --server-soft: #ebe9fd;
+    --db: #b45309;
+    --db-soft: #fbeee0;
+    --font-display: "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0c16;
+      --surface: #141726;
+      --surface-2: #1a1e33;
+      --text: #e8e9f5;
+      --text-muted: #9498b3;
+      --border: #2a2f4a;
+      --accent: #8b90f8;
+      --accent-soft: #23244a;
+      --client: #34d399;
+      --client-soft: #12291f;
+      --server: #8b90f8;
+      --server-soft: #23244a;
+      --db: #f0b429;
+      --db-soft: #332512;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0a0c16;
+    --surface: #141726;
+    --surface-2: #1a1e33;
+    --text: #e8e9f5;
+    --text-muted: #9498b3;
+    --border: #2a2f4a;
+    --accent: #8b90f8;
+    --accent-soft: #23244a;
+    --client: #34d399;
+    --client-soft: #12291f;
+    --server: #8b90f8;
+    --server-soft: #23244a;
+    --db: #f0b429;
+    --db-soft: #332512;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+  }
+
+  header.hero { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede { max-width: 68ch; color: var(--text-muted); font-size: 1.02rem; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .lede code {
+    font-family: var(--font-mono);
+    font-size: 0.87rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+
+  section { display: flex; flex-direction: column; gap: 1rem; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 0; }
+  h3 { font-size: 0.92rem; font-weight: 700; margin: 0; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .diagram-panel { padding: 1.5rem; overflow-x: auto; }
+  .diagram-panel pre.mermaid { margin: 0; min-width: 640px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.client { background: var(--client); }
+  .dot.server { background: var(--server); }
+  .dot.db { background: var(--db); }
+
+  .capas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.9rem;
+  }
+  .capa {
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    border-top: 3px solid var(--capa-color, var(--accent));
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .capa.client { --capa-color: var(--client); }
+  .capa.server { --capa-color: var(--server); }
+  .capa.db { --capa-color: var(--db); }
+  .capa h3 { display: flex; align-items: center; gap: 0.5rem; }
+  .capa p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+  .capa code {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    background: var(--surface-2);
+    padding: 0.08rem 0.3rem;
+    border-radius: 4px;
+  }
+
+  footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    max-width: 68ch;
+  }
+  footer code {
+    font-family: var(--font-mono);
+    font-size: 0.83rem;
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <span class="eyebrow">MatriClick · Flujo de información</span>
+    <h1>Cómo viaja un dato dentro del sistema</h1>
+    <p class="lede">
+      Los otros tres diagramas describen <strong>estructura</strong> (qué tablas hay) y
+      <strong>permisos</strong> (quién puede hacer qué). Este es distinto: sigue el
+      <strong>recorrido real</strong> de un dato — desde que haces clic en un botón hasta que la
+      pantalla se actualiza — cruzando las tres capas reales del proyecto: el navegador, el
+      servidor de Next.js, y Supabase.
+    </p>
+  </header>
+
+  <section>
+    <h2>Las tres capas</h2>
+    <div class="capas">
+      <div class="capa client">
+        <h3><span class="dot client"></span>Navegador</h3>
+        <p>Client Components (<code>"use client"</code>): formularios, botones, tablas con
+        paginación. No hablan con la base de datos directamente — nunca tienen la llave secreta.</p>
+      </div>
+      <div class="capa server">
+        <h3><span class="dot server"></span>Servidor Next.js</h3>
+        <p><code>proxy.ts</code> (guarda de sesión), Server Components (<code>page.tsx</code>,
+        hacen el fetch inicial) y Server Actions (<code>"use server"</code>, en
+        <code>lib/actions/*.ts</code>) que validan con Zod antes de tocar la base de datos.</p>
+      </div>
+      <div class="capa db">
+        <h3><span class="dot db"></span>Supabase</h3>
+        <p>Postgres con Row Level Security activa en cada tabla: filtra qué filas ve/edita cada
+        quien según <code>rol_actual()</code>, y triggers que protegen campos puntuales
+        (como el documento).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>El patrón general de cualquier acción</h2>
+    <div class="panel diagram-panel">
+<pre class="mermaid">
+sequenceDiagram
+  participant UI as Navegador
+  participant Proxy as proxy.ts
+  participant SC as Server Component
+  participant SA as Server Action
+  participant Zod as Validación Zod
+  participant RLS as Postgres + RLS
+  participant Trig as Triggers
+
+  rect rgba(79, 70, 229, 0.06)
+  Note over UI,RLS: Carga inicial de la página
+  UI->>Proxy: solicita /dashboard/...
+  Proxy->>Proxy: verifica sesión y rol
+  Proxy->>SC: permite el paso
+  SC->>RLS: fetch inicial
+  RLS-->>SC: filas ya filtradas por rol
+  SC-->>UI: HTML renderizado
+  end
+
+  rect rgba(180, 83, 9, 0.06)
+  Note over UI,RLS: El usuario hace clic o envía un formulario
+  UI->>SA: llama a la Server Action
+  SA->>Zod: valida los datos recibidos
+  Zod-->>SA: ok, o lista de errores
+  SA-->>UI: si hay errores, los muestra y se detiene aquí
+  SA->>RLS: query o mutación (con los datos válidos)
+  RLS->>Trig: verifica columnas protegidas
+  Trig-->>RLS: permite o rechaza
+  RLS-->>SA: resultado (datos o error)
+  SA->>SC: revalidatePath()
+  SC->>RLS: vuelve a consultar todo
+  RLS-->>SC: datos frescos
+  SC-->>UI: UI actualizada
+  end
+</pre>
+    </div>
+    <p class="lede">
+      El paso <code>revalidatePath()</code> es el que más sorprende a quien recién aprende:
+      después de que la Server Action guarda el cambio, <strong>no</strong> actualiza la pantalla
+      ella misma — le dice a Next.js "los datos de esta ruta cambiaron", y es el Server Component
+      quien vuelve a consultar todo y manda una versión nueva de la interfaz. El navegador nunca
+      sabe <em>cómo</em> se guardó nada; solo recibe la pantalla ya actualizada.
+    </p>
+  </section>
+
+  <section>
+    <h2>Ejemplo real: una solicitud de matrícula</h2>
+    <p class="lede">
+      El mismo patrón, pero siguiendo un dato concreto — y con un giro interesante: <strong>dos
+      personas distintas</strong> tocan la misma fila de la tabla <code>matriculas</code> en
+      momentos distintos.
+    </p>
+    <div class="panel diagram-panel">
+<pre class="mermaid">
+sequenceDiagram
+  actor Acu as Acudiente
+  participant SA1 as crearSolicitudMatricula()
+  participant DB as matriculas (RLS)
+  actor Adm as Admin
+  participant SA2 as actualizarEstadoMatricula()
+
+  Acu->>SA1: clic en "Solicitar matrícula"
+  SA1->>DB: insert con estado = 'Pendiente'
+  alt no cumple la política RLS (otro estudiante, u otro estado)
+    DB-->>SA1: rechazado por la base de datos
+    SA1-->>Acu: error
+  else cumple la política
+    DB-->>SA1: fila creada
+    SA1-->>Acu: "Solicitud enviada"
+  end
+
+  Note over DB,Adm: Aparece un badge ámbar en el sidebar del admin
+
+  Adm->>DB: abre Matrículas, ve la fila resaltada
+  Adm->>SA2: cambia el estado a "Activa"
+  SA2->>DB: revisa el cupo del grupo otra vez
+  alt sin cupo disponible
+    DB-->>SA2: no se puede aprobar
+    SA2-->>Adm: error
+  else hay cupo
+    DB-->>SA2: estado_matricula = 'Activa'
+    SA2-->>Adm: "Estado actualizado"
+  end
+
+  Note over Acu: La próxima vez que entra, ve su matrícula "Activa"
+</pre>
+    </div>
+    <p class="lede">
+      Fíjate en el paso <strong>C</strong>: la regla "solo puedes crear tu propia matrícula, y
+      solo en Pendiente" no vive en el formulario ni en el botón — vive en una política RLS
+      dentro de la base de datos. Aunque alguien se salte la interfaz por completo y mande la
+      petición a mano, Postgres la rechaza igual. Eso es lo que probamos con <code>curl</code>
+      cuando construimos esta función: intentar insertar en <code>"Activa"</code> directamente
+      falla con <code>row-level security policy</code>, sin llegar nunca a tocar la tabla.
+    </p>
+  </section>
+
+  <footer>
+    Los tres diagramas anteriores (esquema de clases, modelo entidad-relación, casos de uso)
+    responden <em>qué existe</em> y <em>quién puede tocarlo</em>. Este responde <em>cómo se
+    mueve</em> un dato entre el clic del usuario y la fila guardada en Postgres — los cuatro
+    juntos cubren el sistema completo, cada uno desde un ángulo distinto.
+  </footer>
+</div>
+<script>mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });</script>
+</body>
+</html>
