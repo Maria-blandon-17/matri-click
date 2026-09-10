@@ -11,9 +11,13 @@ import type { RolUsuario } from "@/lib/types/database.types"
 export function MobileSidebar({
   rol,
   badges = {},
+  nombre,
+  correo,
 }: {
   rol: RolUsuario
   badges?: Record<string, number>
+  nombre?: string | null
+  correo?: string | null
 }) {
   const [open, setOpen] = useState(false)
 
@@ -31,7 +35,13 @@ export function MobileSidebar({
         className="flex w-72 flex-col gap-4 border-white/10 bg-card p-4 text-foreground"
       >
         <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-        <SidebarContent onNavigate={() => setOpen(false)} rol={rol} badges={badges} />
+        <SidebarContent
+          onNavigate={() => setOpen(false)}
+          rol={rol}
+          badges={badges}
+          nombre={nombre}
+          correo={correo}
+        />
       </SheetContent>
     </Sheet>
   )

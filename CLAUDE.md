@@ -84,10 +84,16 @@ components/
   dashboard/*          sidebar, topbar, kpi-card, widgets del dashboard, cuenta-vinculo-cell
   landing/             secciones de la landing (incluye modules.tsx: "módulos que ya existen")
   brand/logo.tsx        logo (ver sección Marca)
-supabase/migrations/   0001_schema, 0002_roles_y_perfiles, 0003_rls_policies,
-                        0004_seed, 0005_fix_rls_recursion, 0006_endurecer_permisos_funciones
-                        — correr en ese orden en el SQL Editor de Supabase (no hay CLI de
-                        supabase configurada, se aplican a mano)
+supabase/migrations/   0001_schema … 0006_endurecer_permisos_funciones,
+                        0007_solicitudes_matricula (+ 0007b_..._policies), 0008_cuentas_pendientes,
+                        0009_estados_matricula (agrega 'En revisión'/'Rechazada'/'Expirada' al
+                        enum estado_matricula), 0010_expirar_matriculas (pg_cron: job diario que
+                        pasa a 'Expirada' — habilitar la extensión pg_cron en el dashboard antes)
+                        — correr en ese orden en el SQL Editor de Supabase
+                        (no hay CLI de supabase configurada, se aplican a mano). Agregar valores a
+                        un enum: un archivo con solo los `ADD VALUE` (Postgres no deja usarlos en
+                        la misma transacción); si algún default/policy/función los referencia, va
+                        en un archivo aparte que corre después (patrón 0007 + 0007b).
 ```
 
 ## Diagramas del proyecto
@@ -103,6 +109,23 @@ rol, o el patrón de request/response — no por cambios de UI. Detalle en `docs
 Tablas: `sedes, grados, grupos, periodos_academicos, profesores, acudientes, estudiantes,
 matriculas, perfiles`. `perfiles` vincula `auth.users` con un `rol` (`admin | profesor |
 acudiente | estudiante`) y opcionalmente con `id_profesor`/`id_acudiente`/`id_estudiante`.
+
+**Estados** (enums de Postgres):
+- `estado_matricula` (7): `Pendiente` → `En revisión` → `Activa` | `Rechazada` · `Cancelada`
+  (anulada tras estar activa) · `Finalizada` (periodo cerrado) · `Expirada`. El admin cambia el
+  estado con un selector libre (sin reglas de flujo) en `/dashboard/matriculas`; el chequeo de
+  cupo en `actualizarEstadoMatricula` solo aplica al pasar a `Activa`. **`Expirada` es
+  automática**: un job de pg_cron (`expirar_matriculas_pendientes`, migración `0010`) corre a
+  diario y pasa a `Expirada` toda matrícula en `Pendiente`/`En revisión` con >30 días o cuyo
+  periodo ya terminó (`fecha_fin < hoy` — no `fecha_inicio`: se aceptan matrículas tardías
+  mientras el periodo esté en curso); el admin igual puede ponerla a mano. Orden canónico
+  + mapa a color/ícono: `ESTADOS_MATRICULA` y `VARIANT_BY_ESTADO` en
+  `components/dashboard/estado-matricula-badge.tsx`.
+- `estado_estudiante` (3): `Activo | Retirado | Graduado`. `estado_periodo` (3): `Planeado |
+  Activo | Finalizado`.
+- Badge de estado compartido: `components/dashboard/status-badge.tsx` (`<StatusBadge variant
+  label>`, pill con ícono + fondo suave). Lo usan matrículas, estudiantes, periodos y las filas
+  de "Cuentas pendientes". Cada entidad tiene su mapa `estado → StatusVariant`.
 
 - Registro público (`/registro`) permite los 3 roles no-admin: `acudiente`, `estudiante` y
   `profesor`. Admin sigue creándose a mano vía Supabase Admin API (no hay UI para esto — ver
@@ -170,11 +193,56 @@ está vinculada a ningún registro. Se accede desde el dropdown del avatar en el
 ("Mi perfil" + "Cerrar sesión" juntos ahí — el botón de logout suelto que había en el sidebar se
 quitó para no duplicar la acción).
 
+## Shell del dashboard (layout tipo "Eduplex")
+
+`app/dashboard/layout.tsx` = `<Sidebar>` (panel fijo a la izquierda: `sticky h-svh`, borde
+derecho, `bg-#111827`, sin redondeo ni margen — se colapsa a `MobileSidebar`/Sheet en `< md`) +
+columna de contenido (`max-w-[1600px]`, padding normal) sobre un canvas `#0a0f19` con
+`radial-gradient` cobalto. **Sin tarjeta flotante ni gutter** — va a sangre.
+
+**Header** (`components/dashboard/dashboard-header.tsx` → `DashboardHeader` + `DashboardGreeting`):
+solo menú móvil + saludo. No lleva buscador (un search de estudiantes no encajaba en un panel de
+métricas agregadas; el filtrado real del dashboard lo hace el selector de periodo). El menú del
+avatar (Mi perfil / Cerrar sesión) vive **al pie del sidebar** (`SidebarProfile` en `sidebar.tsx`:
+avatar + nombre + correo → `DropdownMenu`), no en el header — así también queda accesible desde
+el `MobileSidebar` (Sheet). `Sidebar`/`SidebarContent`/`MobileSidebar` reciben `nombre`/`correo`.
+`components/dashboard/topbar.tsx` es un wrapper cliente que monta `DashboardHeader` a lo ancho
+completo **en todas las páginas menos `/dashboard/inicio`** (ahí devuelve `null` vía
+`usePathname`). En `/inicio`, `page.tsx` pasa el `DashboardHeader` como prop `header` a
+`InicioFiltroPeriodo` / `InicioPersonal`. En `InicioFiltroPeriodo` el `header` + el selector de
+periodo van en una fila a lo ancho completo arriba; debajo empieza el split de 2 columnas, así
+la columna derecha arranca alineada con la fila de tarjetas (no con el saludo). Las páginas CRUD
+no cambiaron. Paleta: superficies subidas en `globals.css` (`--card #151d2c`, `.glass-card`
+`rgba(23,31,46,.92)`, `--border` 10 %) para que el dashboard no se sienta tan oscuro.
+
 ## `/dashboard/inicio`: filtro por periodo, sin navegar de página
 
 `app/dashboard/inicio/page.tsx` (admin/profesor) hace el fetch inicial en el servidor y le pasa
-los datos a `components/dashboard/inicio-filtro-periodo.tsx` (client), que es quien realmente
-renderiza los KPIs/gauge/tabla y posee el estado. Al cambiar el selector de periodo, **no** se
+los datos a `components/dashboard/inicio-filtro-periodo.tsx` (client), que arma el layout de 2
+columnas de Inicio (inspirado en el mockup "Eduplex", con la paleta oscura del proyecto):
+
+- **Fila superior (ancho completo)**: `header` (saludo) + selector de periodo.
+- **Centro**: `ResumenCards` (3 tarjetas de dominio — Comunidad / Matrículas / Académico — cada
+  una con un número grande + 2 sub-stats en el pie, enlaza a su sección) · grid 2-col
+  [`OcupacionGradoChart` (barras: % de cupos ocupados por grado) + `GruposLista` (lista tipo
+  agenda, top 5)] · grid 3-col [`AiInsightCard` + `OcupacionGauge`] · card "Últimas matrículas"
+  (`MatriculasTable`).
+- **`<aside>` derecha** (`xl:w-[300px]`): `ProBanner` ("MatriClick Pro · Próximamente",
+  honesto — Pro no existe, enlaza a `/#planes`) · `MiniCalendario` (mes actual, marca hoy,
+  decorativo) · `PendientesPanel` (matrículas y cuentas pendientes, top 4 + enlace).
+
+Datos nuevos en `lib/actions/dashboard.ts`: `getResumenDominios` (contadores por dominio) y
+`getOcupacionPorGrado` (matriculados/cupo agregado por grado) — ambos entran a
+`getInicioDashboardData` y se refiltran al cambiar el periodo. `getGrupos()` (de
+`lib/actions/grupos.ts`) y los pendientes los trae `page.tsx`: los pendientes solo para
+`rol === "admin"` (`getMatriculas({ estado: "Pendiente" })` + `getCuentasPendientes()`);
+profesor recibe `[]` y no ve `PendientesPanel`.
+
+Búsqueda de estudiantes: vive en `/dashboard/estudiantes` (input propio en el header de la
+página, `<form method="get">`). `page.tsx` lee `?q=` (Promise, Next 16) y filtra en el servidor
+por nombre + documento. No hay buscador global en el dashboard.
+
+Al cambiar el selector de periodo, **no** se
 navega ni se usa `router.push`/query params — se llama directo a la Server Action
 `getInicioDashboardData(idPeriodo?)` (`lib/actions/dashboard.ts`, que por eso es `"use server"` y
 no `"server-only"`) dentro de un `useTransition`, y se actualiza solo el estado local. Se probó
@@ -301,10 +369,12 @@ de un widget del dashboard para la landing (así la landing cambia sola cuando c
 
 ## Diseño / marca
 
-Todo el sitio (landing, auth, dashboard) usa un **tema oscuro tipo Neuraxis**: fondo casi
-negro con un punto de azul (`#040711`), superficies `#0d131f`/`#0b101c`, borde blanco al 8 %,
-texto slate (`#e2e8f0` / `#94a3b8`) y un azul vivo `#2b66ff` como acento/CTA. El "ambiente"
-azul lo dan los `radial-gradient` de cada layout, **no** el color base. Reemplazó al viejo
+Todo el sitio (landing, auth, dashboard) usa un **tema oscuro tipo Neuraxis**: fondo muy oscuro
+(`--background #080d17`; el canvas del dashboard va un punto más claro, `#0a0f19`), superficies
+`--card #151d2c` / `--popover #141b28` (subidas desde `#0d131f`/`#0b101c` para que el dashboard
+no se sienta tan apagado), borde blanco al 10 %, texto slate (`#e8edf5` / `#a6b2c4`) y un azul
+vivo `#2b66ff` como acento/CTA. El "ambiente" azul lo dan los `radial-gradient` de cada layout,
+**no** el color base. La landing/auth conservan sus degradados sobre `#040711` (contexto propio). Reemplazó al viejo
 "neon-glass" gris+azul-eléctrico (`#0c0f0f` / `#0066ff`) que venía de Google Stitch. Todos los
 tokens viven en el bloque `.dark` de `app/globals.css`.
 

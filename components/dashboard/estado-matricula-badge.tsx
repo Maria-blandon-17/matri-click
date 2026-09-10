@@ -1,30 +1,27 @@
 import type { EstadoMatricula } from "@/lib/types/database.types"
-import { cn } from "@/lib/utils"
+import { StatusBadge, type StatusVariant } from "@/components/dashboard/status-badge"
 
-const styles: Record<EstadoMatricula, string> = {
-  Activa: "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
-  Finalizada: "bg-white/5 border-white/10 text-muted-foreground",
-  Cancelada: "bg-destructive/10 border-destructive/20 text-destructive",
-  Pendiente: "bg-amber-400/10 border-amber-400/20 text-amber-400",
-}
+/** Estados de matrícula en orden de ciclo de vida (para selectores y filtros). */
+export const ESTADOS_MATRICULA: EstadoMatricula[] = [
+  "Pendiente",
+  "En revisión",
+  "Activa",
+  "Rechazada",
+  "Cancelada",
+  "Finalizada",
+  "Expirada",
+]
 
-const dotStyles: Record<EstadoMatricula, string> = {
-  Activa: "bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.8)]",
-  Finalizada: "bg-muted-foreground",
-  Cancelada: "bg-destructive shadow-[0_0_5px_rgba(255,180,171,0.8)]",
-  Pendiente: "bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.8)]",
+export const VARIANT_BY_ESTADO: Record<EstadoMatricula, StatusVariant> = {
+  Pendiente: "pending",
+  "En revisión": "in-review",
+  Activa: "success",
+  Rechazada: "failed",
+  Cancelada: "canceled",
+  Finalizada: "finished",
+  Expirada: "expired",
 }
 
 export function EstadoMatriculaBadge({ estado }: { estado: EstadoMatricula }) {
-  return (
-    <span
-      className={cn(
-        "font-label-mono inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]",
-        styles[estado]
-      )}
-    >
-      <span className={cn("size-1.5 rounded-full", dotStyles[estado])} />
-      {estado}
-    </span>
-  )
+  return <StatusBadge variant={VARIANT_BY_ESTADO[estado]} label={estado} />
 }

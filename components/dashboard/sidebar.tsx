@@ -12,11 +12,32 @@ import {
   BarChart3,
   UserCircle,
   Sparkles,
+  ChevronsUpDown,
+  LogOut,
+  UserRound,
 } from "lucide-react"
 
+import { logout } from "@/lib/actions/auth"
 import { Logo } from "@/components/brand/logo"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import type { RolUsuario } from "@/lib/types/database.types"
+
+function initials(name: string | null | undefined) {
+  if (!name) return "?"
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("")
+}
 
 const TODOS_LOS_ROLES: RolUsuario[] = ["admin", "profesor", "acudiente", "estudiante"]
 
@@ -109,7 +130,7 @@ export function SidebarNavContent({
                 href={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "mx-2 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-colors",
+                  "mx-2 flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm transition-colors",
                   active
                     ? "bg-primary font-bold text-primary-foreground shadow-[0_0_10px_rgba(43,102,255,0.3)]"
                     : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
@@ -131,14 +152,67 @@ export function SidebarNavContent({
   )
 }
 
+function SidebarProfile({
+  nombre,
+  correo,
+  onNavigate,
+}: {
+  nombre?: string | null
+  correo?: string | null
+  onNavigate?: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-left outline-none transition-colors hover:bg-white/[0.06]">
+        <Avatar className="size-9 border border-primary/30">
+          <AvatarFallback className="bg-card text-xs">
+            {initials(nombre || correo)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold">{nombre || "Mi cuenta"}</p>
+          {correo && <p className="truncate text-[10px] text-muted-foreground">{correo}</p>}
+        </div>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem
+          render={
+            <Link
+              href="/dashboard/cuentas"
+              onClick={onNavigate}
+              className="flex w-full items-center gap-2"
+            >
+              <UserRound className="size-4" />
+              Mi perfil
+            </Link>
+          }
+        />
+        <DropdownMenuItem variant="destructive">
+          <form action={logout} className="contents">
+            <button type="submit" className="flex w-full items-center gap-2">
+              <LogOut className="size-4" />
+              Cerrar sesión
+            </button>
+          </form>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function SidebarContent({
   onNavigate,
   rol,
   badges = {},
+  nombre,
+  correo,
 }: {
   onNavigate?: () => void
   rol: RolUsuario
   badges?: Record<string, number>
+  nombre?: string | null
+  correo?: string | null
 }) {
   return (
     <>
@@ -165,6 +239,8 @@ export function SidebarContent({
           </div>
         </div>
       </div>
+
+      <SidebarProfile nombre={nombre} correo={correo} onNavigate={onNavigate} />
     </>
   )
 }
@@ -172,13 +248,17 @@ export function SidebarContent({
 export function Sidebar({
   rol,
   badges = {},
+  nombre,
+  correo,
 }: {
   rol: RolUsuario
   badges?: Record<string, number>
+  nombre?: string | null
+  correo?: string | null
 }) {
   return (
-    <aside className="fixed top-0 left-0 z-40 hidden h-full w-[260px] flex-col gap-4 border-r border-white/10 bg-card/60 p-4 shadow-2xl backdrop-blur-xl md:flex">
-      <SidebarContent rol={rol} badges={badges} />
+    <aside className="sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-white/10 bg-[#111827] p-4 md:flex">
+      <SidebarContent rol={rol} badges={badges} nombre={nombre} correo={correo} />
     </aside>
   )
 }

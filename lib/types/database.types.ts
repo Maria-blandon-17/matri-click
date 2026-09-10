@@ -12,7 +12,14 @@ export type TipoDocEstudiante = "TI" | "RC" | "CE" | "Pasaporte"
 export type Genero = "Masculino" | "Femenino" | "Otro"
 export type EstadoEstudiante = "Activo" | "Retirado" | "Graduado"
 export type EstadoPeriodo = "Activo" | "Finalizado" | "Planeado"
-export type EstadoMatricula = "Activa" | "Cancelada" | "Finalizada" | "Pendiente"
+export type EstadoMatricula =
+  | "Activa"
+  | "Cancelada"
+  | "Finalizada"
+  | "Pendiente"
+  | "En revisión"
+  | "Rechazada"
+  | "Expirada"
 export type RolUsuario = "admin" | "profesor" | "acudiente" | "estudiante"
 
 export interface Database {

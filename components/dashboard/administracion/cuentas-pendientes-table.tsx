@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions/cuentas-pendientes"
 import { DataTable } from "@/components/dashboard/data-table"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
+import { StatusBadge } from "@/components/dashboard/status-badge"
 import { Button } from "@/components/ui/button"
 import { TableCell, TableHead, TableRow } from "@/components/ui/table"
 import type { RolUsuario } from "@/lib/types/database.types"
@@ -101,6 +102,7 @@ export function CuentasPendientesTable({ cuentas }: { cuentas: CuentaPendiente[]
           <TableHead>Correo</TableHead>
           <TableHead>Documento</TableHead>
           <TableHead>Tipo</TableHead>
+          <TableHead>Estado</TableHead>
           <TableHead className="hidden md:table-cell">Fecha de registro</TableHead>
           <TableHead className="w-56 text-right">Acciones</TableHead>
         </TableRow>
@@ -116,6 +118,9 @@ export function CuentasPendientesTable({ cuentas }: { cuentas: CuentaPendiente[]
             >
               {ROL_LABEL[cuenta.rol]}
             </span>
+          </TableCell>
+          <TableCell>
+            <StatusBadge variant="pending" label="Pendiente" />
           </TableCell>
           <TableCell className="hidden text-muted-foreground md:table-cell">
             {new Date(cuenta.creadaEn).toLocaleDateString("es-CO")}

@@ -3,6 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Filter } from "lucide-react"
 
+import { ESTADOS_MATRICULA } from "@/components/dashboard/estado-matricula-badge"
 import type { Database } from "@/lib/types/database.types"
 
 type Periodo = Database["public"]["Tables"]["periodos_academicos"]["Row"]
@@ -48,10 +49,11 @@ export function MatriculasFilters({ periodos }: { periodos: Periodo[] }) {
             onChange={(e) => setParam("estado", e.target.value)}
           >
             <option value="all">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Activa">Activa</option>
-            <option value="Finalizada">Finalizada</option>
-            <option value="Cancelada">Cancelada</option>
+            {ESTADOS_MATRICULA.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -4,16 +4,16 @@ import { eliminarPeriodo } from "@/lib/actions/periodos"
 import { PeriodoFormDialog } from "@/components/dashboard/academico/periodo-form-dialog"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { DataTable } from "@/components/dashboard/data-table"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge, type StatusVariant } from "@/components/dashboard/status-badge"
 import { TableCell, TableHead, TableRow } from "@/components/ui/table"
-import type { Database } from "@/lib/types/database.types"
+import type { Database, EstadoPeriodo } from "@/lib/types/database.types"
 
 type Periodo = Database["public"]["Tables"]["periodos_academicos"]["Row"]
 
-const ESTADO_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
-  Activo: "default",
-  Planeado: "secondary",
-  Finalizado: "outline",
+const ESTADO_VARIANT: Record<EstadoPeriodo, StatusVariant> = {
+  Activo: "success",
+  Planeado: "pending",
+  Finalizado: "finished",
 }
 
 export function PeriodosTable({ periodos, esAdmin }: { periodos: Periodo[]; esAdmin: boolean }) {
@@ -36,7 +36,7 @@ export function PeriodosTable({ periodos, esAdmin }: { periodos: Periodo[]; esAd
           <TableCell>{new Date(periodo.fecha_inicio).toLocaleDateString("es-CO")}</TableCell>
           <TableCell>{new Date(periodo.fecha_fin).toLocaleDateString("es-CO")}</TableCell>
           <TableCell>
-            <Badge variant={ESTADO_VARIANT[periodo.estado]}>{periodo.estado}</Badge>
+            <StatusBadge variant={ESTADO_VARIANT[periodo.estado]} label={periodo.estado} />
           </TableCell>
           {esAdmin && (
             <TableCell className="flex justify-end gap-1">

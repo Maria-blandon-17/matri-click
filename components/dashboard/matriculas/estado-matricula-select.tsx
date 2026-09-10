@@ -4,22 +4,21 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 
 import { actualizarEstadoMatricula } from "@/lib/actions/matriculas"
+import { ESTADOS_MATRICULA } from "@/components/dashboard/estado-matricula-badge"
 import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
 import type { EstadoMatricula } from "@/lib/types/database.types"
 import { cn } from "@/lib/utils"
 
-const ESTADOS = {
-  Pendiente: "Pendiente",
-  Activa: "Activa",
-  Cancelada: "Cancelada",
-  Finalizada: "Finalizada",
-}
+const ESTADOS = Object.fromEntries(ESTADOS_MATRICULA.map((e) => [e, e]))
 
 const COLOR_BY_ESTADO: Record<EstadoMatricula, string> = {
   Pendiente: "text-amber-400",
+  "En revisión": "text-yellow-400",
   Activa: "text-emerald-400",
-  Cancelada: "text-destructive",
-  Finalizada: "text-muted-foreground",
+  Rechazada: "text-red-400",
+  Cancelada: "text-rose-400",
+  Finalizada: "text-slate-300",
+  Expirada: "text-slate-400",
 }
 
 export function EstadoMatriculaSelect({

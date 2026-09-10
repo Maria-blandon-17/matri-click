@@ -1,26 +1,42 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { CalendarRange, Loader2, Users, ClipboardCheck, ClipboardList, School, Filter, ExternalLink } from "lucide-react"
+import { CalendarRange, Loader2, Filter, ExternalLink } from "lucide-react"
 
 import { getInicioDashboardData, type InicioDashboardData } from "@/lib/actions/dashboard"
+import type { MatriculaConRelaciones } from "@/lib/actions/matriculas"
+import type { CuentaPendiente } from "@/lib/actions/cuentas-pendientes"
+import type { GrupoConRelaciones } from "@/lib/actions/grupos"
 import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
-import { KpiCard } from "@/components/dashboard/kpi-card"
 import { AiInsightCard } from "@/components/dashboard/ai-insight-card"
 import { OcupacionGauge } from "@/components/dashboard/ocupacion-gauge"
 import { MatriculasTable } from "@/components/dashboard/matriculas-table"
+import { ResumenCards } from "@/components/dashboard/resumen-cards"
+import { OcupacionGradoChart } from "@/components/dashboard/ocupacion-grado-chart"
+import { GruposLista } from "@/components/dashboard/grupos-lista"
+import { MiniCalendario } from "@/components/dashboard/mini-calendario"
+import { PendientesPanel } from "@/components/dashboard/pendientes-panel"
+import { ProBanner } from "@/components/dashboard/pro-banner"
 import type { Database } from "@/lib/types/database.types"
 
 type Periodo = Database["public"]["Tables"]["periodos_academicos"]["Row"]
 
 export function InicioFiltroPeriodo({
+  header,
   periodos,
   initialData,
   periodoActivoLabel,
+  grupos,
+  matriculasPendientes,
+  cuentasPendientes,
 }: {
+  header: React.ReactNode
   periodos: Periodo[]
   initialData: InicioDashboardData
   periodoActivoLabel: string
+  grupos: GrupoConRelaciones[]
+  matriculasPendientes: MatriculaConRelaciones[]
+  cuentasPendientes: CuentaPendiente[]
 }) {
   const [data, setData] = useState(initialData)
   const [periodoId, setPeriodoId] = useState("all")
@@ -44,28 +60,33 @@ export function InicioFiltroPeriodo({
     })
   }
 
+  const mostrarPendientes =
+    matriculasPendientes.length > 0 || cuentasPendientes.length > 0
+
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarRange className="size-4 text-muted-foreground" />
-          <span className="font-label-mono text-xs text-muted-foreground uppercase">Periodo</span>
-          <Combobox value={periodoId} onValueChange={onPeriodoChange} items={items}>
-            <ComboboxTrigger className="h-9 w-52 border-white/10 bg-card/60">
-              <ComboboxValue />
-            </ComboboxTrigger>
-            <ComboboxContent searchPlaceholder="Buscar periodo..." />
-          </Combobox>
-          {isPending && <Loader2 className="size-4 animate-spin text-primary" />}
-        </div>
+    <div className="flex flex-col gap-5">
+      {header}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <CalendarRange className="size-4 text-muted-foreground" />
+        <span className="font-label-mono text-xs text-muted-foreground uppercase">Periodo</span>
+        <Combobox value={periodoId} onValueChange={onPeriodoChange} items={items}>
+          <ComboboxTrigger className="h-9 w-52 border-white/10 bg-card/60">
+            <ComboboxValue />
+          </ComboboxTrigger>
+          <ComboboxContent searchPlaceholder="Buscar periodo..." />
+        </Combobox>
+        {isPending && <Loader2 className="size-4 animate-spin text-primary" />}
       </div>
 
-      <div className="flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <KpiCard label="Estudiantes" value={data.kpis.estudiantes} icon={Users} />
-          <KpiCard label="Matrículas activas" value={data.kpis.matriculasActivas} icon={ClipboardCheck} />
-          <KpiCard label="Total matrículas" value={data.kpis.totalMatriculas} icon={ClipboardList} />
-          <KpiCard label="Grupos" value={data.kpis.grupos} icon={School} />
+      <div className="flex flex-col gap-6 xl:flex-row">
+        {/* Columna central */}
+        <div className="flex min-w-0 flex-1 flex-col gap-5">
+          <ResumenCards resumen={data.resumen} />
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <OcupacionGradoChart datos={data.ocupacionPorGrado} />
+          <GruposLista grupos={grupos} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -93,6 +114,16 @@ export function InicioFiltroPeriodo({
           </div>
         </div>
       </div>
-    </>
+
+        {/* Columna derecha */}
+        <aside className="flex shrink-0 flex-col gap-5 xl:w-[300px]">
+          <ProBanner />
+          <MiniCalendario />
+          {mostrarPendientes && (
+            <PendientesPanel matriculas={matriculasPendientes} cuentas={cuentasPendientes} />
+          )}
+        </aside>
+      </div>
+    </div>
   )
 }

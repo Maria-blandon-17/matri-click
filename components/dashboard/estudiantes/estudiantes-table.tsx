@@ -6,16 +6,16 @@ import { EstudianteFormDialog } from "@/components/dashboard/estudiantes/estudia
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { CuentaVinculoCell } from "@/components/dashboard/cuenta-vinculo-cell"
 import { DataTable } from "@/components/dashboard/data-table"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge, type StatusVariant } from "@/components/dashboard/status-badge"
 import { TableCell, TableHead, TableRow } from "@/components/ui/table"
-import type { Database } from "@/lib/types/database.types"
+import type { Database, EstadoEstudiante } from "@/lib/types/database.types"
 
 type Acudiente = Database["public"]["Tables"]["acudientes"]["Row"]
 
-const ESTADO_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
-  Activo: "default",
-  Graduado: "secondary",
-  Retirado: "outline",
+const ESTADO_VARIANT: Record<EstadoEstudiante, StatusVariant> = {
+  Activo: "success",
+  Graduado: "finished",
+  Retirado: "canceled",
 }
 
 export function EstudiantesTable({
@@ -57,9 +57,10 @@ export function EstudiantesTable({
               : "Sin asignar"}
           </TableCell>
           <TableCell>
-            <Badge variant={ESTADO_VARIANT[estudiante.estado_estudiante]}>
-              {estudiante.estado_estudiante}
-            </Badge>
+            <StatusBadge
+              variant={ESTADO_VARIANT[estudiante.estado_estudiante]}
+              label={estudiante.estado_estudiante}
+            />
           </TableCell>
           {esAdmin && (
             <TableCell>
