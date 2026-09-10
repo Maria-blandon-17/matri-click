@@ -1,10 +1,16 @@
 "use server"
 
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { loginSchema, registroSchema } from "@/lib/validations/auth"
+import {
+  loginSchema,
+  nuevaPasswordSchema,
+  recuperarSchema,
+  registroSchema,
+} from "@/lib/validations/auth"
 
 export type AuthFormState = {
   errors?: Record<string, string[]>
@@ -116,6 +122,72 @@ export async function registro(
     message:
       "Cuenta creada. Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.",
   }
+}
+
+export async function solicitarRecuperacion(
+  _prevState: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const validated = recuperarSchema.safeParse({ email: formData.get("email") })
+
+  if (!validated.success) {
+    return { errors: validated.error.flatten().fieldErrors }
+  }
+
+  // Base URL desde la request (no hay NEXT_PUBLIC_SITE_URL configurada).
+  const hdrs = await headers()
+  const origin =
+    hdrs.get("origin") ?? `https://${hdrs.get("host") ?? "matri-click.vercel.app"}`
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(validated.data.email, {
+    redirectTo: `${origin}/auth/callback?next=/actualizar-password`,
+  })
+
+  if (error) {
+    return { message: "No pudimos enviar el correo. Intenta de nuevo en unos minutos." }
+  }
+
+  // Respuesta neutra a propósito: no revela si el correo tiene cuenta o no.
+  return {
+    success: true,
+    message:
+      "Si ese correo tiene una cuenta, te enviamos un enlace para restablecer la contraseña. Revisa tu bandeja de entrada y la carpeta de spam.",
+  }
+}
+
+export async function actualizarPassword(
+  _prevState: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const validated = nuevaPasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  })
+
+  if (!validated.success) {
+    return { errors: validated.error.flatten().fieldErrors }
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return {
+      message:
+        'El enlace expiró o no es válido. Solicita uno nuevo desde "¿Olvidaste tu contraseña?".',
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: validated.data.password })
+
+  if (error) {
+    return { message: error.message }
+  }
+
+  redirect("/dashboard/inicio")
 }
 
 export async function logout() {

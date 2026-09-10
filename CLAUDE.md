@@ -63,7 +63,8 @@ hay que repetir un `<ComboboxItem>` por opción como antes con `SelectItem`.
 ```
 app/
   (marketing)/        landing pública — layout fuerza tema oscuro (class="dark")
-  (auth)/login|registro/  auth — layout también fuerza tema oscuro
+  (auth)/{login,registro,recuperar,actualizar-password}/  auth (ver "Pantallas de auth" abajo)
+  auth/callback/     route handler: aterrizaje de los enlaces de correo de Supabase
   dashboard/           área autenticada (protegida por proxy.ts) — layout también fuerza "dark"
     academico/{grados,grupos,periodos}
     administracion/{sedes,profesores,acudientes}
@@ -209,6 +210,46 @@ fondo claro que Chrome no deja overridear con CSS normal — hay una regla en `a
 (`input:-webkit-autofill`) con el truco del `box-shadow` inset para forzar el tema oscuro ahí
 también. No borrarla pensando que es CSS muerto.
 
+## Pantallas de auth
+
+Login y registro viven en **una sola pantalla a pantalla completa con transición deslizante**
+(`components/auth/auth-flow.tsx`, `<AuthFlow>`): panel de imagen a un lado, formulario al otro.
+Al pasar de login a registro el panel de imagen se desliza al lado contrario (y el formulario
+al suyo) con `transition-transform` / `transition-[margin]` `duration-700`; el contenido del
+formulario hace un fundido corto (`animate-in fade-in`, key por modo). Cada modo sigue siendo
+una **ruta real** (`/login`, `/registro`) — `app/(auth)/{login,registro}/page.tsx` solo hacen
+`<AuthFlow initialMode="…" />`. El botón "Regístrate"/"Inicia sesión" **no navega**: cambia el
+estado y actualiza la URL con `history.replaceState`, para no remontar nada durante la
+animación (un refresh o visita directa cargan la ruta correcta). En `< lg` no hay panel de
+imagen: solo el formulario con el fundido. Respeta `prefers-reduced-motion`.
+
+Piezas compartidas en `components/auth/`:
+- `auth-visual.tsx` (`<AuthVisual className>`) — panel de imagen (`/assets/fondo.webp` +
+  degradado + marca que enlaza a `/` + claim). El alto, el padding y el `rounded-*` los pone
+  cada consumidor por `className` (en `AuthFlow` va con `p-3` en el wrapper + `rounded-[28px]`
+  para que las esquinas del lado interno se vean redondeadas en ambos lados).
+- `login-form.tsx`, `registro-form.tsx` — los formularios (client, `useActionState`), con prop
+  `onSwitch`. Labels `sr-only` + placeholder, inputs `h-12 rounded-xl bg-black/20 border-white/10`.
+- `auth-shell.tsx` (`<AuthShell>`) — cascarón split SIN slide, para `/recuperar` y
+  `/actualizar-password`.
+
+`app/(auth)/layout.tsx` quedó mínimo (solo `dark` + fuente + `min-h-svh`). Cada página aporta su
+propio fondo: `AuthShell`/`AuthFlow` traen el suyo; `registro` ya no depende del layout para eso.
+
+### Recuperación de contraseña
+
+Flujo implementado (2026-09-10), **pendiente de config en Supabase para que el correo llegue —
+ver `ROADMAP.md`** (Redirect URLs allowlist + SMTP propio):
+- `/recuperar` → acción `solicitarRecuperacion` (`lib/actions/auth.ts`) → `resetPasswordForEmail`
+  con `redirectTo` = `<origin>/auth/callback?next=/actualizar-password` (el `origin` se saca de
+  `headers()`, no hay `NEXT_PUBLIC_SITE_URL`). Respuesta neutra: no revela si el correo existe.
+- `app/auth/callback/route.ts` — canjea `?code=` (PKCE, correo por defecto) **o**
+  `?token_hash=&type=` (si se personaliza la plantilla) → crea la sesión → redirige a `?next=`.
+  Sin token válido → `/login?error=enlace_invalido`.
+- `/actualizar-password` — `page.tsx` es Server Component con guard: sin sesión → `/recuperar`.
+  `form.tsx` (client) → acción `actualizarPassword` → `updateUser({ password })` → dashboard.
+- Esquemas nuevos en `lib/validations/auth.ts`: `recuperarSchema`, `nuevaPasswordSchema`.
+
 ## Landing pública
 
 Secciones, en orden: `Hero` → `Modules` (`#modules`, "Los módulos que ya
@@ -220,6 +261,18 @@ una sección `Features` aparte. También se eliminó `DashboardPreview` ("Vista 
 el `Hero` es ahora una sola columna centrada (badge + titular + subtítulo + 2 CTA) con fondo
 `<HeroBackground>` (imagen a sangre completa, `.hero-aura*` en `globals.css`), sin la tarjeta
 de ejemplo del panel.
+
+`<HeroBackground>` además pinta `.landing-ambient` (`globals.css`): una sola capa estática
+`position: absolute` que arranca por debajo del hero (`top: 700px`, 640px en móvil) y llega al
+pie, con 4 `radial-gradient` cobalto de baja opacidad (`rgba(43,102,255,0.05–0.07)`) — dos
+pegados a los bordes izquierdo/derecho y dos de empalme arriba/abajo. Mismo criterio que
+`.hero-aura`: **sin `filter: blur()`, sin `mix-blend-mode`, sin animación** (la landing no debe
+repintar por frame al hacer scroll). Para subir/bajar la intensidad se tocan los alfas ahí.
+
+El `Footer` (`components/landing/footer.tsx`) es de 3 columnas (marca + claim · Navegación
+`#modules`/`#how-it-works`/`#planes` · Cuenta `/login`/`/registro`) + barra inferior con
+copyright. Solo enlaza a rutas/anclas que existen — no hay columna "Legal" ni iconos sociales
+porque no hay páginas de términos/privacidad ni cuentas sociales (si se agregan, ver `ROADMAP.md`).
 
 Regla general: todo el copy debe corresponder a algo que **de verdad funciona hoy** en
 `/dashboard` — antes de agregar contenido nuevo, verificar contra el código real, no inventar
@@ -257,8 +310,10 @@ tokens viven en el bloque `.dark` de `app/globals.css`.
 
 - Al cambiar la paleta hay que tocar, además del bloque `.dark`: las utilidades de
   `app/globals.css` (`glass-card`, `glass-modal`, `neon-button`, `bg-hero-glow` — tienen rgba
-  hardcodeados), el fallback de `.hero-aura`, y los `radial-gradient` inline de
-  `app/dashboard/layout.tsx` y `app/(auth)/layout.tsx`. Los `shadow-[...]`/`stroke` con azul
+  hardcodeados), el fallback de `.hero-aura`, `.landing-ambient`, el `radial-gradient` inline de
+  `app/dashboard/layout.tsx`, y los `radial-gradient` / degradados `#040711` inline de
+  `components/auth/{auth-shell,auth-flow,auth-visual}.tsx` (`app/(auth)/layout.tsx` ya no tiene
+  fondo). Los `shadow-[...]`/`stroke` con azul
   hardcodeado en componentes se migran con sed sobre `--include=*.tsx` (última:
   `rgba(…)`→`rgba(43,102,255,…)`, `#…`→`#2b66ff`). Ojo: en `shadow-[…]` de Tailwind el rgba
   **no puede llevar espacios**. Quedan muchos `bg-white/5` · `border-white/10` sueltos —

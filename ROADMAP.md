@@ -202,6 +202,22 @@ Se quitó la sección `Features` por duplicar contenido con `Modules`. El CTA fi
   lanzamiento real: configurar SMTP propio (Resend/SendGrid/Postmark, Project Settings → Auth →
   SMTP Settings) y reactivar "Confirm email" en Sign In / Providers → Email. Sin esto cualquiera
   se registra con un correo ajeno sin verificarlo.
+- **Recuperación de contraseña — falta config de Supabase para que llegue el correo**: el flujo
+  ya está implementado en código (2026-09-10): `/recuperar` (pide correo →
+  `solicitarRecuperacion` → `resetPasswordForEmail`), `/auth/callback/route.ts` (canjea `code` o
+  `token_hash` y crea la sesión), `/actualizar-password` (server-guard por sesión +
+  `actualizarPassword` → `updateUser`). Link "¿Olvidaste tu contraseña?" en `/login`. Para que
+  funcione end-to-end en Supabase:
+  1. **Authentication → URL Configuration → Redirect URLs**: agregar `http://localhost:3000/**` y
+     `https://matri-click.vercel.app/**` (sin esto Supabase ignora el `redirectTo` y el enlace
+     del correo no vuelve a la app).
+  2. **SMTP propio** (mismo pendiente que "Confirmación de email" de arriba) — con el correo
+     compartido de Supabase el envío del enlace de recuperación choca con el mismo rate limit.
+  3. Opcional (recomendado para que el enlace sirva desde otro dispositivo): personalizar la
+     plantilla **Reset Password** para usar
+     `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/actualizar-password`.
+     El callback ya soporta ese formato; sin personalizar, usa el flujo PKCE `?code=` que solo
+     funciona en el mismo navegador que pidió el reset.
 - **"Prevent use of leaked passwords"** (Authentication → Attack Protection): confirmado en el
   dashboard — solo disponible en plan Pro. Activar al hacer upgrade.
 - **Captcha (hCaptcha/Turnstile)**: se probó por error activarlo sin el `Captcha secret` ni el

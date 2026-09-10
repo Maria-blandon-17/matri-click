@@ -7,6 +7,22 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>
 
+export const recuperarSchema = z.object({
+  email: z.string().email({ message: "Ingresa un correo válido." }),
+})
+
+export const nuevaPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden.",
+    path: ["confirmPassword"],
+  })
+
 export const registroSchema = z
   .object({
     nombreCompleto: z

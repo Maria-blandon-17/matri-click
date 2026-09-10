@@ -235,3 +235,39 @@
     background-position: center 50%;
   }
 }
+
+/* ============================================================
+   Ambiente cobalto suave para el cuerpo de la landing (Módulos,
+   Cómo funciona, Planes, CTA). Arranca por debajo del hero y llega
+   hasta el pie. Mismo criterio que .hero-aura: una sola capa
+   estática, sin `filter: blur()`, sin `mix-blend-mode` y sin
+   animación — solo tres radial-gradient de baja opacidad sobre
+   --background, para que no repinte por frame al hacer scroll.
+
+   Lo renderiza <HeroBackground> (segundo hijo del contenedor de
+   app/(marketing)/layout.tsx) en z-0, detrás del contenido (z-10).
+   ============================================================ */
+.landing-ambient {
+  position: absolute;
+  top: 700px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    /* Resplandor pegado al borde izquierdo, a lo alto */
+    radial-gradient(26rem 64rem at -6% 46%, rgba(43, 102, 255, 0.07) 0%, transparent 68%),
+    /* Resplandor pegado al borde derecho, a lo alto */
+    radial-gradient(26rem 64rem at 106% 56%, rgba(43, 102, 255, 0.06) 0%, transparent 68%),
+    /* Foco superior izquierdo — empalme con el hero */
+    radial-gradient(44rem 28rem at 12% 3%, rgba(43, 102, 255, 0.06) 0%, transparent 70%),
+    /* Foco inferior — hacia el CTA */
+    radial-gradient(40rem 26rem at 40% 82%, rgba(43, 102, 255, 0.05) 0%, transparent 75%);
+}
+
+@media (max-width: 640px) {
+  .landing-ambient {
+    top: 640px;
+  }
+}
