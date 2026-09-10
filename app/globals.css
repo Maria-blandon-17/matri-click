@@ -83,32 +83,43 @@
   --sidebar-ring: #c3c0ff;
 }
 
-/* Tema oscuro "neon-glass" — usado exclusivamente por la landing (ver
-   app/(marketing)/layout.tsx), generado a partir del diseño de Stitch. */
+/* Tema oscuro — usado por landing, auth y dashboard (todos fuerzan
+   `class="dark"`). Paleta tipo Neuraxis: fondo casi negro con un punto de
+   azul (#030712), superficies #0d131f, borde blanco al 8 %, y un azul
+   vivo (#2b66ff) como acento/CTA. El "ambiente" azul lo dan los
+   radial-gradient de cada layout, no el color base. */
 .dark {
-  --background: #0c0f0f;
-  --foreground: #e2e2e2;
-  --card: #1e2020;
-  --card-foreground: #e2e2e2;
-  --popover: #1a1c1c;
-  --popover-foreground: #e2e2e2;
-  --primary: #0066ff;
+  --background: #040711;
+  --foreground: #e2e8f0;
+  --card: #0d131f;
+  --card-foreground: #e2e8f0;
+  --popover: #0b101c;
+  --popover-foreground: #e2e8f0;
+  --primary: #2b66ff;
   --primary-foreground: #ffffff;
-  --secondary: #1a1c1c;
-  --secondary-foreground: #e2e2e2;
-  --muted: #1a1c1c;
-  --muted-foreground: #c2c6d8;
-  --accent: rgba(0, 102, 255, 0.12);
-  --accent-foreground: #b3c5ff;
+  --secondary: #131b2b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #131b2b;
+  --muted-foreground: #94a3b8;
+  --accent: rgba(43, 102, 255, 0.14);
+  --accent-foreground: #bacdff;
   --destructive: #ffb4ab;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: #0066ff;
-  --chart-1: #0066ff;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #2b66ff;
+  --chart-1: #2b66ff;
   --chart-2: #34d399;
   --chart-3: #fbbf24;
-  --chart-4: #c2c6d8;
+  --chart-4: #94a3b8;
   --chart-5: #ff897d;
+  --sidebar: #0b101c;
+  --sidebar-foreground: #d8def0;
+  --sidebar-primary: #8fb0ff;
+  --sidebar-primary-foreground: #0b101c;
+  --sidebar-accent: #131b2b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #8fb0ff;
 }
 
 @layer base {
@@ -146,24 +157,24 @@
 
 @layer utilities {
   .glass-card {
-    background-color: rgba(18, 20, 20, 0.6);
+    background-color: rgba(13, 19, 31, 0.8);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
   .neon-button {
-    box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
+    box-shadow: 0 0 15px rgba(43, 102, 255, 0.4);
     transition:
       box-shadow 0.3s ease,
       transform 0.3s ease;
   }
   .neon-button:hover {
-    box-shadow: 0 0 25px rgba(0, 102, 255, 0.6);
+    box-shadow: 0 0 25px rgba(43, 102, 255, 0.6);
     transform: translateY(-1px);
   }
   .bg-hero-glow {
     background-image: radial-gradient(
       circle at 50% 0%,
-      rgba(0, 102, 255, 0.15) 0%,
+      rgba(43, 102, 255, 0.15) 0%,
       transparent 50%
     );
   }
@@ -178,9 +189,49 @@
     letter-spacing: 0.05em;
   }
   .glass-modal {
-    background-color: rgba(18, 20, 20, 0.8);
+    background-color: rgba(11, 16, 28, 0.85);
     backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 40px rgba(179, 197, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 40px rgba(43, 102, 255, 0.12);
+  }
+}
+
+/* ============================================================
+   Fondo del hero de la landing — imagen estática (public/assets/fondo.webp).
+   Lo renderiza <HeroBackground> como primer hijo del contenedor de
+   app/(marketing)/layout.tsx, detrás del contenido (que vive en z-10).
+
+   Barato de pintar a propósito: sin animación, sin `filter: blur()`,
+   sin `mask-image` (la imagen ya se funde a negro en sus bordes) y con
+   altura acotada (solo cubre el hero, no toda la página). El único
+   degradado es el de empalme inferior con --background.
+   ============================================================ */
+.hero-aura {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 900px;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Imagen ORIGINAL de Recraft (1344×768, sin recortar) a sangre completa
+     (`cover`) — nunca deja franjas a los lados. En desktop la imagen queda
+     más alta que el contenedor, así que `background-position-y` ajusta a
+     qué altura cae el arco; en móvil manda `height`. Fallback = --background. */
+  background: #040711 url("/assets/fondo.webp") center 70% / cover no-repeat;
+}
+
+/* Funde la imagen con el resto de la página. */
+.hero-aura__fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 62%, var(--background) 100%);
+}
+
+@media (max-width: 640px) {
+  .hero-aura {
+    height: 860px;
+    background-position: center 50%;
   }
 }

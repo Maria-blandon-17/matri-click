@@ -162,13 +162,13 @@ export function NuevaMatriculaForm({
                     cy="50"
                     r="45"
                     fill="none"
-                    stroke={sinCupo ? "#ffb4ab" : "#0066ff"}
+                    stroke={sinCupo ? "#ffb4ab" : "#2b66ff"}
                     strokeWidth="8"
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={offset}
                     style={{
-                      filter: `drop-shadow(0 0 8px ${sinCupo ? "rgba(255,180,171,0.6)" : "rgba(0,102,255,0.6)"})`,
+                      filter: `drop-shadow(0 0 8px ${sinCupo ? "rgba(255,180,171,0.6)" : "rgba(43,102,255,0.6)"})`,
                     }}
                   />
                 </svg>

@@ -29,7 +29,7 @@ export function HowItWorks() {
           Proceso
         </p>
         <h2 className="text-3xl font-bold sm:text-4xl">Cómo funciona</h2>
-        <div className="mx-auto mt-4 mb-6 h-0.5 w-16 rounded-full bg-primary shadow-[0_0_10px_rgba(0,102,255,0.6)]" />
+        <div className="mx-auto mt-4 mb-6 h-0.5 w-16 rounded-full bg-primary shadow-[0_0_10px_rgba(43,102,255,0.6)]" />
         <p className="text-sm text-muted-foreground">
           De registrarte a tener tu matrícula al día, en cuatro pasos.
         </p>

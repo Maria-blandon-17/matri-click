@@ -46,7 +46,7 @@ export function OcupacionGauge({
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               className="transition-[stroke-dashoffset] duration-700 ease-out"
-              style={{ filter: "drop-shadow(0 0 8px rgba(0,102,255,0.4))" }}
+              style={{ filter: "drop-shadow(0 0 8px rgba(43,102,255,0.4))" }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -61,7 +61,7 @@ export function OcupacionGauge({
         <div className="flex w-full flex-col gap-3 md:w-auto">
           <div className="flex items-center justify-between gap-6 rounded-xl border border-white/5 bg-white/5 p-3">
             <div className="flex items-center gap-3">
-              <span className="size-3 rounded-full bg-primary shadow-[0_0_8px_rgba(0,102,255,0.5)]" />
+              <span className="size-3 rounded-full bg-primary shadow-[0_0_8px_rgba(43,102,255,0.5)]" />
               <span className="text-sm text-muted-foreground">Matriculados</span>
             </div>
             <span className="font-bold">

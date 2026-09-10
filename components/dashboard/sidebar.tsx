@@ -111,7 +111,7 @@ export function SidebarNavContent({
                 className={cn(
                   "mx-2 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-colors",
                   active
-                    ? "bg-primary font-bold text-primary-foreground shadow-[0_0_10px_rgba(0,102,255,0.3)]"
+                    ? "bg-primary font-bold text-primary-foreground shadow-[0_0_10px_rgba(43,102,255,0.3)]"
                     : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                 )}
               >
@@ -143,7 +143,7 @@ export function SidebarContent({
   return (
     <>
       <div className="mb-6 flex items-center gap-3 px-2">
-        <Logo size={40} className="shadow-[0_0_15px_rgba(0,102,255,0.3)]" />
+        <Logo size={40} className="shadow-[0_0_15px_rgba(43,102,255,0.3)]" />
         <div>
           <h1 className="text-[22px] leading-tight font-bold tracking-tight text-primary">
             MatriClick

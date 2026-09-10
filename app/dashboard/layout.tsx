@@ -33,7 +33,7 @@ export default async function DashboardLayout({
       style={{
         fontFamily: "var(--font-hanken-grotesk)",
         background:
-          "radial-gradient(circle at 15% 50%, rgba(0, 102, 255, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(179, 197, 255, 0.03), transparent 25%), #121414",
+          "radial-gradient(circle at 15% 50%, rgba(43,102,255,0.06), transparent 25%), radial-gradient(circle at 85% 30%, rgba(159,184,240,0.04), transparent 25%), #040711",
         backgroundAttachment: "fixed",
       }}
     >

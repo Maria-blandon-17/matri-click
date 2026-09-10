@@ -9,7 +9,7 @@ export function AiInsightCard({ porcentaje }: { porcentaje: number }) {
       <div className="from-primary/20 absolute bottom-0 left-0 h-1/2 w-full bg-gradient-to-t to-transparent" />
       <div className="relative z-10 flex items-start justify-between">
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-md">
-          <span className="size-2 rounded-full bg-primary shadow-[0_0_5px_rgba(0,102,255,1)]" />
+          <span className="size-2 rounded-full bg-primary shadow-[0_0_5px_rgba(43,102,255,1)]" />
           <span className="font-label-mono text-[10px] tracking-wider">AI INSIGHTS</span>
         </div>
         <button className="flex size-8 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10">

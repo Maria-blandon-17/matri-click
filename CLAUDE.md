@@ -91,10 +91,11 @@ supabase/migrations/   0001_schema, 0002_roles_y_perfiles, 0003_rls_policies,
 
 ## Diagramas del proyecto
 
-`docs/diagrams/` tiene 3 HTML autocontenidos (abrir directo en el navegador, sin build):
-esquema de clases, modelo entidad-relación (pata de gallina) y casos de uso por rol. Actualizarlos
-a mano cuando cambie el modelo de datos o los permisos por rol — no por cambios de UI. Detalle en
-`docs/diagrams/README.md`.
+`docs/diagrams/` tiene 4 HTML autocontenidos (abrir directo en el navegador, sin build):
+esquema de clases, modelo entidad-relación (pata de gallina), casos de uso por rol, y flujo de
+información (cómo viaja un dato entre navegador/servidor/Supabase, con el ejemplo de una
+solicitud de matrícula). Actualizarlos a mano cuando cambie el modelo de datos, los permisos por
+rol, o el patrón de request/response — no por cambios de UI. Detalle en `docs/diagrams/README.md`.
 
 ## Modelo de datos y roles
 
@@ -210,12 +211,15 @@ también. No borrarla pensando que es CSS muerto.
 
 ## Landing pública
 
-Secciones, en orden: `Hero` → `DashboardPreview` → `Modules` (`#modules`, "Los módulos que ya
+Secciones, en orden: `Hero` → `Modules` (`#modules`, "Los módulos que ya
 puedes usar hoy": Estudiantes, Matrículas, Académico, Administración) → `HowItWorks`
 (`#how-it-works`) → `Planes` (`#planes`, comparación Gratis/Pro) → `Cta`. Se eliminó
 `Features` (duplicaba literalmente 2 de sus 3 tarjetas con `Modules`) — si se necesita un
 diferenciador que no sea "módulo", agregarlo como copy dentro de `Modules`/`Planes`, no revivir
-una sección `Features` aparte.
+una sección `Features` aparte. También se eliminó `DashboardPreview` ("Vista previa del panel"):
+el `Hero` es ahora una sola columna centrada (badge + titular + subtítulo + 2 CTA) con fondo
+`<HeroBackground>` (imagen a sangre completa, `.hero-aura*` en `globals.css`), sin la tarjeta
+de ejemplo del panel.
 
 Regla general: todo el copy debe corresponder a algo que **de verdad funciona hoy** en
 `/dashboard` — antes de agregar contenido nuevo, verificar contra el código real, no inventar
@@ -224,10 +228,6 @@ todavía (columna "Pro"), y lo hace con un badge "Próximamente" a propósito �
 honestidad si se edita: nunca presentar algo de `ROADMAP.md` como si ya funcionara. El CTA final
 ya no dice "Activar MatriClick Pro" (esa frase implicaba que Pro ya existía) — dice "Comienza
 gratis" y apunta a `/registro`, coherente con que Pro está marcado "Próximamente" justo arriba.
-Mismo principio en `Hero`: la tarjeta de ejemplo del panel usa lenguaje neutro ("Ocupación de
-cupos: 82% este periodo" + badge "Vista previa"), nunca en segunda persona tipo "tus matrículas
-aumentaron X%" — eso se leía como un resultado real y personal del visitante, cuando es un dato
-de ejemplo fijo. Si se edita ese card, mantener el tono neutro/de ejemplo.
 
 Flujo de trabajo para pedirle diseños a Google Stitch: se genera un prompt describiendo el
 sistema de tokens exacto (colores, tipografía, radios — copiarlos literales de
@@ -240,26 +240,63 @@ por IA (URLs `lh3.googleusercontent.com` con prompts de retrato) y frases de ana
 predictiva inventada (ej. "podrías necesitar abrir 1 grupo más") — nunca copiar ninguna de las
 dos cosas. Revisar cada propuesta de Stitch contra el schema real antes de traerla al código.
 
-`components/landing/dashboard-preview.tsx` reutiliza **directamente** los componentes reales del
-dashboard (`components/dashboard/{kpi-card,ai-insight-card,ocupacion-gauge,matriculas-table}.tsx`)
-con datos de ejemplo con la misma forma que los tipos reales — no es un mockup aparte. Si el
-diseño de esos componentes cambia, la landing cambia sola con ellos. Mantener este patrón: nunca
-recrear una versión "aparte" de un widget del dashboard para la landing.
+Si en el futuro se vuelve a mostrar una vista previa del panel en la landing, reutilizar
+**directamente** los componentes reales del dashboard
+(`components/dashboard/{kpi-card,ai-insight-card,ocupacion-gauge,matriculas-table}.tsx`) con
+datos de ejemplo con la misma forma que los tipos reales — nunca recrear una versión "aparte"
+de un widget del dashboard para la landing (así la landing cambia sola cuando cambia el panel).
 
 ## Diseño / marca
 
-Todo el sitio (landing, auth, dashboard) usa un tema oscuro "neon-glass" generado a partir de
-diseños hechos en **Google Stitch** e implementados a mano en el código real (no hay Stitch
-conectado al repo, fue un flujo manual de prompt → HTML de Stitch → traducción a componentes).
+Todo el sitio (landing, auth, dashboard) usa un **tema oscuro tipo Neuraxis**: fondo casi
+negro con un punto de azul (`#040711`), superficies `#0d131f`/`#0b101c`, borde blanco al 8 %,
+texto slate (`#e2e8f0` / `#94a3b8`) y un azul vivo `#2b66ff` como acento/CTA. El "ambiente"
+azul lo dan los `radial-gradient` de cada layout, **no** el color base. Reemplazó al viejo
+"neon-glass" gris+azul-eléctrico (`#0c0f0f` / `#0066ff`) que venía de Google Stitch. Todos los
+tokens viven en el bloque `.dark` de `app/globals.css`.
 
-- Paleta y utilidades (`glass-card`, `glass-modal`, `neon-button`, `bg-hero-glow`,
-  `bg-grid-pattern`, `font-label-mono`) están en `app/globals.css`, dentro del bloque `.dark`.
-  El `:root` (tema claro, índigo) quedó definido pero **no se usa en ningún lado actualmente** —
-  si se pide un modo claro/toggle de tema en el futuro, ahí ya hay una base.
+- Al cambiar la paleta hay que tocar, además del bloque `.dark`: las utilidades de
+  `app/globals.css` (`glass-card`, `glass-modal`, `neon-button`, `bg-hero-glow` — tienen rgba
+  hardcodeados), el fallback de `.hero-aura`, y los `radial-gradient` inline de
+  `app/dashboard/layout.tsx` y `app/(auth)/layout.tsx`. Los `shadow-[...]`/`stroke` con azul
+  hardcodeado en componentes se migran con sed sobre `--include=*.tsx` (última:
+  `rgba(…)`→`rgba(43,102,255,…)`, `#…`→`#2b66ff`). Ojo: en `shadow-[…]` de Tailwind el rgba
+  **no puede llevar espacios**. Quedan muchos `bg-white/5` · `border-white/10` sueltos —
+  funcionan, pero pulirlos sería pasarlos a `border-white/[0.08]` como en Neuraxis.
+- `components/landing/planes.tsx` ("Elige tu plan") está rehecho al estilo de tarjetas de
+  Neuraxis: grid de 2, `rounded-[32px]`, Gratis = tarjeta destacada (gradiente
+  `from-[#18346e]`, borde `blue-400/40`, glow `shadow-[0_0_50px_-12px_…]`, `md:-translate-y-1`
+  y highlight superior), Pro = tarjeta plana `#0b101c/80` con la cinta diagonal "Próximamente".
+  Checks en círculo azul (`bg-primary`) para Gratis, gris para Pro. El copy sigue la regla de
+  honestidad (Pro = "Por definir" + "Próximamente", sin CTA activo).
+- El `:root` (tema claro, índigo) sigue definido pero **no se usa** — base para un modo claro
+  futuro.
 - Tipografías: `Hanken Grotesk` (`--font-hanken-grotesk`) para texto general, `JetBrains Mono`
   (`--font-jetbrains-mono`, clase `.font-label-mono`) para labels/mono-data — ambas cargadas una
   sola vez en `app/layout.tsx` y aplicadas vía `style={{ fontFamily: ... }}` en cada layout con
   `dark`, no en `:root`/body global.
+- Fondo del hero de la landing: `<HeroBackground>` (`components/landing/hero-background.tsx`)
+  es un `<div>` cuyo fondo lo pone `.hero-aura` en `app/globals.css` con
+  `background: #040711 url(/assets/fondo.webp) center 70% / cover` a sangre completa. La imagen
+  (horizonte oscuro + arco de luz azul) se generó en **Recraft** y se usa **tal cual** (solo
+  PNG→WebP por peso): fuente sin comprimir en `public/assets/fondo1.png`, servida
+  `public/assets/fondo.webp` (~45 KB). Claves:
+  - **`cover` a ancho completo** — nunca deja franjas a los lados. En desktop la imagen queda
+    más alta que el contenedor, así que `background-position-y` (hoy `70%`) ajusta a qué altura
+    cae el arco; en móvil (`@media (max-width: 640px)`) no hay holgura vertical, manda `height`.
+    Si se cambia la imagen hay que re-tunear `height` + `background-position` mirando el
+    resultado en desktop y a 390 px.
+  - **Sin animación, sin `filter: blur()`, sin `mask-image`, sin `next/image`** — todo eso se
+    probó y hacía la landing lenta (repintados por frame). La imagen ya se funde a negro en
+    sus bordes; solo hay un degradado inferior de empalme (`.hero-aura__fade`).
+  - Si la imagen se ve borrosa es reescalado (1344 px de ancho estirados a la pantalla). El
+    arreglo real es subir una versión con Upscale de Recraft (~2700-4000 px) y regenerar el
+    webp; no toquetear CSS.
+  - El **`Navbar` es transparente** (`sticky top-0 z-50` y nada más), **no** `.glass-card`: el
+    `backdrop-filter` de un header sticky sobre la imagen se re-desenfocaba cada frame de
+    scroll, y además dejaba una línea divisoria fea. Ahora el top es una sola superficie
+    continua con el fondo del hero por detrás.
+  - `app/(marketing)/layout.tsx` incluye un `<link rel="preload" as="image">` del webp (LCP).
 - Logo: `components/brand/logo.tsx`, usa `public/assets/logo-icon.png` (recorte cuadrado del
   ícono, fondo blanco opaco — el intento de fondo transparente dejó "agujeros" en el papel
   blanco del propio diseño, así que se usa opaco dentro de una placa blanca redondeada). También

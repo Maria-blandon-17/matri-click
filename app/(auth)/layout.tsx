@@ -8,7 +8,7 @@ export default function AuthLayout({
       className="dark relative flex min-h-svh items-center justify-center overflow-hidden bg-background p-4 text-foreground"
       style={{
         fontFamily: "var(--font-hanken-grotesk)",
-        background: "radial-gradient(circle at 50% 50%, #1a1c29 0%, #0c0f0f 100%)",
+        background: "radial-gradient(circle at 50% 50%, #131b2b 0%, #040711 100%)",
       }}
     >
       <div className="pointer-events-none absolute top-[-20%] left-[-10%] size-[600px] rounded-full bg-primary/10 blur-[120px]" />
