@@ -355,13 +355,24 @@ iteraciones:
 - **Un solo canvas, no uno por sección**: con dos (hero + cuerpo) la grilla de puntos de cada uno
   empezaba en su borde y se veía una costura. `startY/endY` son fracciones de la altura TOTAL de la
   página; las 5 primeras capas son la composición original del hero reescalada al primer ~16 %.
-- **Dos `<canvas>` apilados**: cintas (caras por el blur, se redibujan cada ~42 ms) y puntos
-  (baratos, cada frame). Antes iban juntos y el blur bajaba el fps → los puntos "perseguían" el
-  cursor con rezago. `MOUSE_LERP = 0.35`.
-- Pausa con `IntersectionObserver` + `visibilitychange`; con `prefers-reduced-motion` dibuja un solo
-  frame estático. El usuario aceptó explícitamente el costo de performance de animar la landing
-  (antes era estática por un intento viejo con blur que sí repintaba al hacer scroll) — si en algún
-  dispositivo va lenta, bajar `blur`/capas en `LANDING_WAVE_LAYERS` antes que quitar el canvas.
+- **Rendimiento en celular** (la landing en móvil iba muy lenta; en PC bien). El canvas cubre
+  toda la página (~8000 px de alto en móvil), así que nada puede escalar con el área a resolución
+  completa:
+  - Cintas en un `<canvas>` a **resolución reducida** (`WAVE_RES_DESKTOP` 0.35 / `WAVE_RES_MOBILE`
+    0.22) escalado por CSS — son puro blur, no se nota, y el blur cuesta por píxel. El blur de
+    `ctx.filter` va en píxeles del lienzo, por eso se multiplica por la resolución. Redibujo cada
+    42 ms (70 ms en táctil). Antes era devicePixelRatio ×2 sobre toda la página: lienzos de
+    decenas de MB.
+  - Grilla de puntos = **fondo CSS estático** (`radial-gradient`); solo los resaltados del cursor
+    van en un `<canvas>` `position: fixed` del tamaño del viewport que pinta ~130 puntos cerca del
+    mouse, recortado al rect del contenedor, y solo con `(hover: hover) and (pointer: fine)`. En
+    táctil no corre ningún loop de puntos.
+  - Tamaño con `ResizeObserver` del contenedor, **no `window.resize`**: en móvil la barra de
+    direcciones dispara `resize` al hacer scroll y eso recreaba los lienzos enteros.
+  - Pausa con `IntersectionObserver` + `visibilitychange`; con `prefers-reduced-motion` dibuja un
+    solo frame estático.
+  - Si vuelve a ir lenta en algún dispositivo, bajar resolución/`blur`/capas antes que quitar el
+    canvas (el usuario quiere la animación en toda la landing).
 - `AUTH_WAVE_LAYERS` (mismo archivo) es la composición original del hero sin reescalar, para el
   panel del formulario de login/registro. La foto `fondo.webp` y las clases `.hero-aura*` /
   `.landing-ambient` ya no existen.

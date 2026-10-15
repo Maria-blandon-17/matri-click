@@ -299,40 +299,43 @@ export const AUTH_WAVE_LAYERS: WaveLayer[] = [
 ]
 
 const GRID_SPACING = 28
-const BASE_RADIUS = 1
 const MAX_RADIUS = 3.6
 const INTERACTION_RADIUS = 160
 const INTERACTION_RADIUS_SQ = INTERACTION_RADIUS * INTERACTION_RADIUS
-
-/** Cintas con blur se redibujan a ~24fps — se mueven lento, no se nota, y le
- *  deja presupuesto de frame a la grilla de puntos (ver nota en el componente). */
-const WAVE_REDRAW_INTERVAL_MS = 42
-/** Suavizado del punto que sigue al cursor. Antes el blur de las cintas bajaba
- *  el fps real del loop y con eso el lerp (aunque el número era el mismo) se
- *  sentía como si la grilla "persiguiera" el cursor con rezago. Al separar el
- *  redibujo de las cintas del de los puntos, este valor ya alcanza casi
- *  instantáneo en frames reales a 60fps. */
 const MOUSE_LERP = 0.35
 
+/** Las cintas son puro blur: dibujarlas a baja resolución y que el CSS las escale no se
+ *  nota, y el costo del blur es proporcional a los píxeles del lienzo. */
+const WAVE_RES_DESKTOP = 0.35
+const WAVE_RES_MOBILE = 0.22
+const WAVE_INTERVAL_DESKTOP_MS = 42
+const WAVE_INTERVAL_MOBILE_MS = 70
+
+/** Grilla de puntos estática como fondo CSS (cero costo por frame). El canvas solo pinta
+ *  los puntos resaltados alrededor del cursor, encima de esta grilla. */
+const DOT_PATTERN_STYLE: React.CSSProperties = {
+  backgroundImage:
+    "radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 1px, transparent 1.6px)",
+  backgroundSize: `${GRID_SPACING}px ${GRID_SPACING}px`,
+  backgroundPosition: `-${GRID_SPACING / 2}px -${GRID_SPACING / 2}px`,
+}
+
 /**
- * Cintas de luz animadas (+ opcionalmente grilla de puntos reactiva
- * al cursor) dibujadas en dos <canvas> apilados, acotados al tamaño
- * de su contenedor (lo mide con `getBoundingClientRect` del propio
- * canvas, así que sirve igual para el hero de 900px que para un
- * bloque de secciones mucho más alto):
+ * Cintas de luz animadas + (opcional) grilla de puntos reactiva al cursor, del tamaño de su
+ * contenedor (que debe ser `position: relative`). Pensado para correr bien en celular aunque
+ * el contenedor sea toda la landing (~8000 px de alto en móvil):
  *
- *  - canvas de cintas: lo más caro de pintar (`filter: blur()`) se
- *    redibuja cada ~42ms (~24fps) porque las cintas se mueven lento y
- *    no se nota la diferencia.
- *  - canvas de puntos (opcional, `showDots`): sin blur, se redibuja
- *    en *cada* frame de `requestAnimationFrame` (~60fps), así que
- *    sigue al cursor sin rezago. Se usa tanto en el hero como en el
- *    cuerpo de la página (ambos con `showDots`) — queda opcional por
- *    si algún uso futuro no lo necesita.
- *
- * Pausa ambos loops cuando el contenedor sale de vista
- * (`IntersectionObserver`) o la pestaña está oculta, y respeta
- * `prefers-reduced-motion` (un solo frame estático, sin loop).
+ *  - Cintas: un `<canvas>` a resolución reducida (0.35, o 0.22 en táctil) escalado por CSS.
+ *    Antes era a devicePixelRatio ×2 sobre toda la página — lienzos de decenas de MB y blur
+ *    sobre millones de píxeles cada 42 ms, lo que hacía la landing muy lenta en celular.
+ *  - Puntos: la grilla base es un fondo CSS estático. Los resaltados del cursor van en un
+ *    `<canvas>` `fixed` del tamaño del viewport que solo dibuja los ~130 puntos cercanos al
+ *    cursor (recortado al rectángulo del contenedor). Solo se activa con puntero fino
+ *    (mouse); en táctil no hay cursor y no corre nada.
+ *  - Tamaño con `ResizeObserver` del contenedor, no `window.resize` — en celular la barra de
+ *    direcciones dispara `resize` al hacer scroll y antes eso recreaba los lienzos enteros.
+ *  - Pausa con `IntersectionObserver` / pestaña oculta; `prefers-reduced-motion` dibuja un
+ *    solo frame estático.
  */
 export function WaveCanvas({
   layers,
@@ -341,128 +344,127 @@ export function WaveCanvas({
   layers: WaveLayer[]
   showDots?: boolean
 }) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const waveCanvasRef = useRef<HTMLCanvasElement>(null)
   const dotCanvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    const container = containerRef.current
     const waveCanvas = waveCanvasRef.current
     const waveCtx = waveCanvas?.getContext("2d")
-    const dotCanvas = showDots ? dotCanvasRef.current : null
-    const dotCtx = dotCanvas?.getContext("2d") ?? null
-    if (!waveCanvas || !waveCtx) return
-    if (showDots && (!dotCanvas || !dotCtx)) return
+    if (!container || !waveCanvas || !waveCtx) return
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches
+    const waveRes = finePointer ? WAVE_RES_DESKTOP : WAVE_RES_MOBILE
+    const waveInterval = finePointer ? WAVE_INTERVAL_DESKTOP_MS : WAVE_INTERVAL_MOBILE_MS
+
+    const dotCanvas = showDots && finePointer && !reducedMotion ? dotCanvasRef.current : null
+    const dotCtx = dotCanvas?.getContext("2d") ?? null
 
     let width = 0
     let height = 0
+    let running = false
     let waveRaf = 0
     let dotRaf = 0
-    let running = false
-    let lastWaveDrawTime = 0
+    let lastWaveDraw = -Infinity
+    let lastTime = 0
+    let dotsDirty = false
 
-    const mouse = { x: -3000, y: -3000, targetX: -3000, targetY: -3000 }
-
-    function resize() {
-      const rect = waveCanvas!.getBoundingClientRect()
-      width = rect.width
-      height = rect.height
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
-      const targets: [HTMLCanvasElement, CanvasRenderingContext2D][] = [[waveCanvas!, waveCtx!]]
-      if (dotCanvas && dotCtx) targets.push([dotCanvas, dotCtx])
-      for (const [canvas, ctx] of targets) {
-        canvas.width = Math.floor(width * dpr)
-        canvas.height = Math.floor(height * dpr)
-        ctx.setTransform(1, 0, 0, 1, 0, 0)
-        ctx.scale(dpr, dpr)
-      }
-    }
-
-    function onMouseMove(e: MouseEvent) {
-      if (!dotCanvas) return
-      const rect = dotCanvas.getBoundingClientRect()
-      mouse.targetX = e.clientX - rect.left
-      mouse.targetY = e.clientY - rect.top
-    }
-
-    function onMouseLeave() {
-      mouse.targetX = -3000
-      mouse.targetY = -3000
-    }
+    const mouse = { x: -3000, y: -3000, targetX: -3000, targetY: -3000, inside: false }
 
     function drawWaves(time: number) {
-      waveCtx!.clearRect(0, 0, width, height)
-      waveCtx!.save()
+      waveCtx!.setTransform(1, 0, 0, 1, 0, 0)
+      waveCtx!.clearRect(0, 0, waveCanvas!.width, waveCanvas!.height)
+      waveCtx!.setTransform(waveRes, 0, 0, waveRes, 0, 0)
       waveCtx!.globalCompositeOperation = "screen"
 
       for (const wave of layers) {
-        waveCtx!.beginPath()
         const startY = height * wave.startY
         const endY = height * wave.endY
-        const step = 24
-
+        waveCtx!.beginPath()
         waveCtx!.moveTo(-40, startY)
-        for (let x = -40; x <= width + 40; x += step) {
-          const progress = x / width
-          const baseY = startY + (endY - startY) * progress
-          const offset1 = Math.sin(x * wave.freq + time * wave.speed + wave.phase) * wave.amplitude
-          const offset2 =
+        for (let x = -40; x <= width + 40; x += 24) {
+          const baseY = startY + (endY - startY) * (x / width)
+          const o1 = Math.sin(x * wave.freq + time * wave.speed + wave.phase) * wave.amplitude
+          const o2 =
             Math.cos(x * (wave.freq * 0.7) - time * (wave.speed * 0.6) + wave.phase) *
             (wave.amplitude * 0.4)
-          waveCtx!.lineTo(x, baseY + offset1 + offset2)
+          waveCtx!.lineTo(x, baseY + o1 + o2)
         }
-
         const gradient = waveCtx!.createLinearGradient(0, startY, width, endY)
-        wave.colors.forEach((c) => gradient.addColorStop(c.stop, c.color))
-
+        for (const c of wave.colors) gradient.addColorStop(c.stop, c.color)
         waveCtx!.strokeStyle = gradient
         waveCtx!.lineWidth = wave.strokeWidth
         waveCtx!.lineCap = "round"
         waveCtx!.lineJoin = "round"
-        waveCtx!.filter = `blur(${wave.blur}px)`
+        // El blur de ctx.filter va en píxeles del lienzo (no lo escala el transform).
+        waveCtx!.filter = `blur(${wave.blur * waveRes}px)`
         waveCtx!.stroke()
       }
-
-      waveCtx!.restore()
+      waveCtx!.filter = "none"
+      waveCtx!.globalCompositeOperation = "source-over"
     }
 
-    function drawDotGrid() {
-      if (!dotCtx) return
-      dotCtx.clearRect(0, 0, width, height)
-      const cols = Math.ceil(width / GRID_SPACING) + 1
-      const rows = Math.ceil(height / GRID_SPACING) + 1
+    function resizeWaves() {
+      const rect = container!.getBoundingClientRect()
+      if (rect.width === width && rect.height === height) return
+      width = rect.width
+      height = rect.height
+      waveCanvas!.width = Math.max(1, Math.ceil(width * waveRes))
+      waveCanvas!.height = Math.max(1, Math.ceil(height * waveRes))
+      drawWaves(lastTime)
+    }
 
-      for (let i = 0; i < cols; i++) {
-        const x = i * GRID_SPACING
-        for (let j = 0; j < rows; j++) {
-          const y = j * GRID_SPACING
+    function resizeDots() {
+      if (!dotCanvas || !dotCtx) return
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dotCanvas.width = Math.ceil(window.innerWidth * dpr)
+      dotCanvas.height = Math.ceil(window.innerHeight * dpr)
+      dotCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      dotsDirty = true
+    }
+
+    function drawDots() {
+      if (!dotCanvas || !dotCtx) return
+      dotCtx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+      if (!mouse.inside) return
+
+      const rect = container!.getBoundingClientRect()
+      dotCtx.save()
+      dotCtx.beginPath()
+      dotCtx.rect(rect.left, rect.top, rect.width, rect.height)
+      dotCtx.clip()
+
+      const iMin = Math.max(0, Math.floor((mouse.x - INTERACTION_RADIUS - rect.left) / GRID_SPACING))
+      const iMax = Math.ceil((mouse.x + INTERACTION_RADIUS - rect.left) / GRID_SPACING)
+      const jMin = Math.max(0, Math.floor((mouse.y - INTERACTION_RADIUS - rect.top) / GRID_SPACING))
+      const jMax = Math.ceil((mouse.y + INTERACTION_RADIUS - rect.top) / GRID_SPACING)
+
+      for (let i = iMin; i <= iMax; i++) {
+        const x = rect.left + i * GRID_SPACING
+        for (let j = jMin; j <= jMax; j++) {
+          const y = rect.top + j * GRID_SPACING
           const dx = x - mouse.x
           const dy = y - mouse.y
           const distSq = dx * dx + dy * dy
-
-          let radius = BASE_RADIUS
-          let alpha = 0.12
-
-          if (distSq < INTERACTION_RADIUS_SQ) {
-            const dist = Math.sqrt(distSq)
-            const norm = 1 - dist / INTERACTION_RADIUS
-            const ease = norm * norm * (3 - 2 * norm)
-            radius = BASE_RADIUS + (MAX_RADIUS - BASE_RADIUS) * ease
-            alpha = 0.12 + (0.65 - 0.12) * ease
-          }
-
+          if (distSq >= INTERACTION_RADIUS_SQ) continue
+          const norm = 1 - Math.sqrt(distSq) / INTERACTION_RADIUS
+          const ease = norm * norm * (3 - 2 * norm)
           dotCtx.beginPath()
-          dotCtx.arc(x, y, radius, 0, Math.PI * 2)
-          dotCtx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`
+          dotCtx.arc(x, y, 1 + (MAX_RADIUS - 1) * ease, 0, Math.PI * 2)
+          dotCtx.fillStyle = `rgba(255, 255, 255, ${(0.53 * ease).toFixed(3)})`
           dotCtx.fill()
         }
       }
+      dotCtx.restore()
     }
 
     function waveFrame(time: number) {
       if (!running) return
-      if (time - lastWaveDrawTime >= WAVE_REDRAW_INTERVAL_MS) {
-        lastWaveDrawTime = time
+      lastTime = time
+      if (time - lastWaveDraw >= waveInterval) {
+        lastWaveDraw = time
         drawWaves(time)
       }
       waveRaf = requestAnimationFrame(waveFrame)
@@ -470,14 +472,19 @@ export function WaveCanvas({
 
     function dotFrame() {
       if (!running) return
-      mouse.x += (mouse.targetX - mouse.x) * MOUSE_LERP
-      mouse.y += (mouse.targetY - mouse.y) * MOUSE_LERP
-      drawDotGrid()
+      const dx = mouse.targetX - mouse.x
+      const dy = mouse.targetY - mouse.y
+      if (Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3 || dotsDirty) {
+        mouse.x += dx * MOUSE_LERP
+        mouse.y += dy * MOUSE_LERP
+        dotsDirty = false
+        drawDots()
+      }
       dotRaf = requestAnimationFrame(dotFrame)
     }
 
     function start() {
-      if (running || prefersReducedMotion) return
+      if (running || reducedMotion) return
       running = true
       waveRaf = requestAnimationFrame(waveFrame)
       if (dotCtx) dotRaf = requestAnimationFrame(dotFrame)
@@ -489,53 +496,64 @@ export function WaveCanvas({
       cancelAnimationFrame(dotRaf)
     }
 
-    resize()
-    if (prefersReducedMotion) {
-      drawWaves(0)
-      drawDotGrid()
-    } else {
-      start()
+    function onMouseMove(e: MouseEvent) {
+      if (!mouse.inside) {
+        mouse.x = e.clientX
+        mouse.y = e.clientY
+      }
+      mouse.inside = true
+      mouse.targetX = e.clientX
+      mouse.targetY = e.clientY
     }
-
-    function onVisibilityChange() {
+    function onMouseLeave() {
+      mouse.inside = false
+      dotsDirty = true
+    }
+    function onScroll() {
+      dotsDirty = true
+    }
+    function onVisibility() {
       if (document.hidden) stop()
       else start()
     }
 
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) start()
-        else stop()
-      },
-      { threshold: 0 }
-    )
-    io.observe(waveCanvas)
+    const ro = new ResizeObserver(resizeWaves)
+    ro.observe(container)
+    const io = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()))
+    io.observe(container)
 
-    window.addEventListener("resize", resize)
+    resizeWaves()
+    drawWaves(0)
     if (dotCanvas) {
-      window.addEventListener("mousemove", onMouseMove)
-      window.addEventListener("mouseleave", onMouseLeave)
+      resizeDots()
+      window.addEventListener("resize", resizeDots)
+      window.addEventListener("mousemove", onMouseMove, { passive: true })
+      document.documentElement.addEventListener("mouseleave", onMouseLeave)
+      window.addEventListener("scroll", onScroll, { passive: true })
     }
-    document.addEventListener("visibilitychange", onVisibilityChange)
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       stop()
+      ro.disconnect()
       io.disconnect()
-      window.removeEventListener("resize", resize)
-      if (dotCanvas) {
-        window.removeEventListener("mousemove", onMouseMove)
-        window.removeEventListener("mouseleave", onMouseLeave)
-      }
-      document.removeEventListener("visibilitychange", onVisibilityChange)
+      window.removeEventListener("resize", resizeDots)
+      window.removeEventListener("mousemove", onMouseMove)
+      document.documentElement.removeEventListener("mouseleave", onMouseLeave)
+      window.removeEventListener("scroll", onScroll)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [layers, showDots])
 
   return (
-    <>
-      <canvas ref={waveCanvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
+    <div ref={containerRef} className="pointer-events-none absolute inset-0" aria-hidden="true">
+      <canvas ref={waveCanvasRef} className="absolute inset-0 h-full w-full" />
       {showDots && (
-        <canvas ref={dotCanvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
+        <>
+          <div className="absolute inset-0" style={DOT_PATTERN_STYLE} />
+          <canvas ref={dotCanvasRef} className="fixed inset-0 h-full w-full" />
+        </>
       )}
-    </>
+    </div>
   )
 }
