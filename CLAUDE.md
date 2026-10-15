@@ -130,7 +130,17 @@ acudiente | estudiante`) y opcionalmente con `id_profesor`/`id_acudiente`/`id_es
 
 - Registro público (`/registro`) permite los 3 roles no-admin: `acudiente`, `estudiante` y
   `profesor`. Admin sigue creándose a mano vía Supabase Admin API (no hay UI para esto — ver
-  `ROADMAP.md`).
+  `ROADMAP.md`). **La creación de cuenta nunca depende de que exista un registro que coincida**
+  — eso quedó confirmado explícitamente con el usuario (2026-10-15): cualquiera se registra
+  libremente y, si no hay coincidencia por documento, la cuenta queda pendiente para que el
+  admin la revise (ver los dos puntos de abajo), no al revés. Si alguna vez se plantea agregar
+  una validación que bloquee el alta por falta de coincidencia, es un cambio de producto que
+  contradice esto — confirmar con el usuario antes, no asumir que es una mejora.
+  `registro()` (`lib/actions/auth.ts`) redirige a `/dashboard/inicio` directo si `signUp`
+  devuelve sesión activa (hoy siempre, porque "Confirm email" está apagado — ver más abajo); el
+  mensaje de "revisa tu correo para confirmar" solo se muestra si de verdad no hay sesión
+  (confirmación de email reactivada). Antes siempre mostraba ese mensaje y dejaba a la persona
+  parada en `/registro` aunque ya tuviera sesión — se sentía como si el registro "no funcionara".
 - **Vinculación automática por documento:** al registrarse, se busca el documento ingresado en
   `estudiantes`/`acudientes`/`profesores` (según el rol elegido) para conectar la cuenta nueva con
   el registro existente. Esta búsqueda usa `createAdminClient()` (service role) a propósito: una
@@ -264,20 +274,65 @@ La animación va en los datos, no en un overlay de carga:
 
 ## Tema oscuro y Portals (gotcha importante)
 
-Todo el sitio vive dentro de un `class="dark"` que hoy está puesto en **`<html>`**
-(`app/layout.tsx`), no solo en los `<div>` internos de cada layout de route group. Esto es
-crítico: `Dialog`, `Select`/`Combobox`, `DropdownMenu`, `Sheet` y `AlertDialog` usan `Portal` de
-React (montan su contenido en `document.body` por defecto). Si `dark` solo estuviera en un
-`<div>` interno (como estaba originalmente), todo lo que se abre en un portal cae **fuera** de
-ese wrapper y renderiza con el tema claro (`:root`, nunca usado en ningún otro lado) — se ve
-roto/genérico. Si se vuelve a tocar el theming, **no quitar `dark` de `<html>`** aunque parezca
-redundante con los `<div class="dark">` de cada layout — esos son inofensivos pero no son
-suficientes por sí solos.
+Landing y auth viven **siempre** dentro de `class="dark"` — no tienen toggle. Eso es crítico
+para los Portals: `Dialog`, `Select`/`Combobox`, `DropdownMenu`, `Sheet` y `AlertDialog` de
+React montan su contenido en `document.body`, fuera de cualquier `<div class="dark">` interno
+que no sea ancestro real en el DOM. Si `dark` solo viviera en un `<div>` interno (como estaba
+originalmente), lo que se abre en un portal cae fuera de ese wrapper y renderiza con el tema
+claro (`:root`) — se ve roto/genérico. Por eso la fuente de verdad real sigue siendo
+**`<html>`** (ver "Modo claro/oscuro del dashboard" abajo: ahora es dinámico, pero el mecanismo
+que lo fija siempre termina poniendo/quitando la clase ahí, nunca solo en un `<div>` interno).
 
 También: los inputs autocompletados por el navegador (usuario/contraseña guardados) fuerzan un
 fondo claro que Chrome no deja overridear con CSS normal — hay una regla en `app/globals.css`
 (`input:-webkit-autofill`) con el truco del `box-shadow` inset para forzar el tema oscuro ahí
 también. No borrarla pensando que es CSS muerto.
+
+## Modo claro/oscuro del dashboard
+
+Solo `/dashboard/**` tiene toggle de tema (ícono sol/luna en el sidebar, arriba junto al logo,
+mismo componente en escritorio y móvil). Landing y auth **no tienen toggle** — siguen forzados
+a oscuro siempre (ver sección de arriba).
+
+- **`lib/theme.ts`** — `getStoredTheme()`/`applyTheme(pathname)` leen `localStorage`
+  (`matriclick-theme`) solo si `pathname` empieza por `/dashboard`; fuera de ahí, oscuro fijo.
+  `NO_FLASH_THEME_SCRIPT` es el mismo mecanismo pero como string crudo, inyectado en `<head>`
+  por `app/layout.tsx` (vía `<script dangerouslySetInnerHTML>`, con `suppressHydrationWarning`
+  en `<html>`) para fijar la clase ANTES del primer paint y evitar el flash oscuro→claro al
+  cargar `/dashboard` con el tema claro guardado.
+- **`components/theme/theme-manager.tsx`** — se monta una vez en `app/layout.tsx`, reaplica el
+  tema en cada navegación client-side (el script de arriba solo corre en la carga inicial/full
+  reload, no en navegación SPA).
+- **`components/theme/theme-toggle.tsx`** — usa `useSyncExternalStore` con un store module-level
+  (no `useState` + `useEffect`), a propósito: `SidebarContent` se monta dos veces (sidebar de
+  escritorio + de móvil), así que cambiar el tema en uno tiene que reflejarse en el otro al
+  instante. Además evita el lint `react-hooks/set-state-in-effect` que sí dispara un
+  `setState` dentro de un `useEffect` corriente.
+- **Alcance — fase 1, a propósito incompleta**: el toggle cambia el canvas de fondo
+  (`app/dashboard/layout.tsx`), pero el **sidebar se queda siempre oscuro** (es el panel de
+  navegación, no responde al tema) y el **contenido de cada página también se queda oscuro
+  siempre** (`<main>` en `app/dashboard/layout.tsx`) — las pantallas de catálogo/widgets todavía
+  tienen decenas de colores metidos a mano (`bg-white/5`, `border-white/10`, `glass-card` con
+  rgba hardcodeado) que asumen fondo oscuro; pasarlas a tokens es trabajo de otra sesión. El
+  usuario pidió explícitamente ir por fases — no asumir que "agregar modo claro" implica
+  convertir todo el dashboard de una vez.
+- **Gotcha que costó encontrar — por qué NO sirve `className="dark"` en un `<div>` anidado**:
+  Tailwind v4 (`@theme inline` en `globals.css`) define `--color-primary: var(--primary)` una
+  sola vez. Ese `--color-primary` (lo que leen las utilidades, ej. `.text-primary`) se resuelve
+  donde se **declara** (`:root`/`.dark` en `<html>`), y ese valor ya resuelto es lo que heredan
+  los descendientes por herencia normal de CSS — redefinir `--primary` con una clase `.dark` en
+  un `<aside>` anidado no hace que `--color-primary` se vuelva a evaluar ahí, porque nunca se
+  re-declara en ese `<aside>`; sigue heredando el valor congelado en `:root`. Esto se manifestó
+  como el sidebar renderizando con los colores del tema **claro** (texto índigo en vez de azul)
+  aunque tuviera `class="dark"` puesta encima.
+  - **La solución real**: `.theme-dark-forced` en `globals.css` — define las variables
+    `--color-*` DIRECTAMENTE (no las `--primary`/`--background`/etc. que alimentan
+    `@theme inline`), con los mismos valores que `.dark`. Se usa en vez de `dark` en el `<aside>`
+    del sidebar, el `SheetContent` del sidebar móvil, y el `<main>` forzado oscuro — los tres
+    puntos de "fase 1" de arriba.
+  - Si se necesita forzar oscuro (o cualquier tema) en una zona nueva que NO sea `<html>`, usar
+    `.theme-dark-forced` (o una clase análoga que redefina `--color-*`), nunca `className="dark"`
+    suelto — no hace nada en un nodo que no sea el que ya trae el tema real.
 
 ## Pantallas de auth
 
@@ -306,6 +361,10 @@ Piezas compartidas en `components/auth/`:
   `dark:bg-input/30` y las utilidades `!bg-*` de Tailwind v4 no le ganaban de forma fiable — un
   fondo translúcido dejaba pasar el brillo del canvas y "lavaba" los campos). Textos sueltos sobre
   el fondo animado van en `text-white` / `text-white/70`, **sin `text-shadow`** (se veía borroso).
+  Contraseña y "repite la contraseña" tienen cada uno su propio ojo mostrar/ocultar (estados
+  `showPassword`/`showConfirmPassword` independientes en `registro-form.tsx`). El campo
+  `documento` filtra no-dígitos en `onInput` (`inputMode="numeric"`, `pattern="[0-9]*"`) además
+  de validarlo en `registroSchema` (`.regex(/^\d+$/)`) — nunca solo client-side.
 - El panel del formulario de `AuthFlow` es una tarjeta `rounded-[28px]` (`isolate` + `overflow-hidden`)
   con un `<WaveCanvas layers={AUTH_WAVE_LAYERS} showDots />` detrás (`-z-20`; el degradado
   translúcido va en `-z-10`). **`isolate` es obligatorio**: sin él los z-index negativos se escapan

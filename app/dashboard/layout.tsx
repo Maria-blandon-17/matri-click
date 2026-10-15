@@ -29,11 +29,11 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="dark flex min-h-svh text-foreground"
+      className="flex min-h-svh text-foreground"
       style={{
         fontFamily: "var(--font-hanken-grotesk)",
         background:
-          "radial-gradient(circle at 12% 0%, rgba(43,102,255,0.05), transparent 30%), radial-gradient(circle at 100% 100%, rgba(159,184,240,0.04), transparent 35%), #0a0f19",
+          "radial-gradient(circle at 12% 0%, rgba(43,102,255,0.05), transparent 30%), radial-gradient(circle at 100% 100%, rgba(159,184,240,0.04), transparent 35%), var(--background)",
         backgroundAttachment: "fixed",
       }}
     >
@@ -52,7 +52,17 @@ export default async function DashboardLayout({
             rol={perfil.rol}
             badges={badges}
           />
-          <main className="min-w-0 flex-1 space-y-5">{children}</main>
+          {/* Forzado oscuro a propósito (fase 1 del modo claro): el shell
+              (este layout, Sidebar, Topbar) ya responde al toggle, pero las
+              páginas de catálogo/widgets todavía usan colores hardcodeados
+              que asumen fondo oscuro (bg-white/5, border-white/10, etc.) —
+              convertirlas es la fase 2. En modo oscuro este `dark` no
+              cambia nada visualmente (--background ya es el mismo oscuro
+              por fuera); en modo claro queda como un panel oscuro sobre el
+              canvas claro, a propósito. */}
+          <main className="theme-dark-forced min-w-0 flex-1 space-y-5 rounded-2xl bg-background p-4 text-foreground sm:p-6">
+            {children}
+          </main>
         </div>
       </div>
     </div>

@@ -30,6 +30,7 @@ const inputClassName =
 export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
   const [state, action, pending] = useActionState(registro, initialState)
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [rol, setRol] = useState<"acudiente" | "estudiante" | "profesor">(
     state?.values?.rol === "estudiante" || state?.values?.rol === "profesor"
       ? state.values.rol
@@ -105,8 +106,14 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
               <Input
                 id="documento"
                 name="documento"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="Número de documento"
                 defaultValue={state?.values?.documento}
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "")
+                }}
                 required
                 className={inputClassName}
               />
@@ -192,12 +199,19 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
-                type={showPassword ? "text" : "password"}
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="Repite la contraseña"
                 required
                 autoComplete="new-password"
-                className={inputClassName}
+                className={cn(inputClassName, "pr-12")}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground/50 transition-colors hover:text-foreground"
+              >
+                {showConfirmPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+              </button>
             </div>
             <FieldError errors={state?.errors?.confirmPassword?.map((message) => ({ message }))} />
           </Field>

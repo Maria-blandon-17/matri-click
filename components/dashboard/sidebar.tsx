@@ -19,6 +19,7 @@ import {
 
 import { logout } from "@/lib/actions/auth"
 import { Logo } from "@/components/brand/logo"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -218,12 +219,13 @@ export function SidebarContent({
     <>
       <div className="mb-6 flex items-center gap-3 px-2">
         <Logo size={40} className="shadow-[0_0_15px_rgba(43,102,255,0.3)]" />
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-[22px] leading-tight font-bold tracking-tight text-primary">
             MatriClick
           </h1>
           <p className="font-label-mono text-[11px] text-muted-foreground">Gestión académica</p>
         </div>
+        <ThemeToggle />
       </div>
 
       <SidebarNavContent onNavigate={onNavigate} rol={rol} badges={badges} />
@@ -257,7 +259,7 @@ export function Sidebar({
   correo?: string | null
 }) {
   return (
-    <aside className="sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-white/10 bg-[#111827] p-4 md:flex">
+    <aside className="theme-dark-forced sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground md:flex">
       <SidebarContent rol={rol} badges={badges} nombre={nombre} correo={correo} />
     </aside>
   )

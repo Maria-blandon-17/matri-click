@@ -43,7 +43,8 @@ export const registroSchema = z
     documento: z
       .string()
       .trim()
-      .min(4, { message: "Ingresa un número de documento válido." }),
+      .min(4, { message: "Ingresa un número de documento válido." })
+      .regex(/^\d+$/, { message: "El documento solo puede tener números." }),
     terminos: z.literal("on", { message: "Debes aceptar los términos y condiciones." }),
   })
   .refine((data) => data.password === data.confirmPassword, {

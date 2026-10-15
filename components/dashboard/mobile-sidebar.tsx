@@ -32,7 +32,7 @@ export function MobileSidebar({
       />
       <SheetContent
         side="left"
-        className="flex w-72 flex-col gap-4 border-white/10 bg-card p-4 text-foreground"
+        className="theme-dark-forced flex w-72 flex-col gap-4 border-sidebar-border bg-sidebar p-4 text-sidebar-foreground"
       >
         <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
         <SidebarContent

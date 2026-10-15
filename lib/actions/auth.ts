@@ -132,6 +132,14 @@ export async function registro(
     }
   }
 
+  // Con la confirmación de email desactivada (ver CLAUDE.md), signUp ya devuelve una
+  // sesión activa — no hace falta que la persona confirme nada, así que entra directo al
+  // panel. Si en el futuro se reactiva la confirmación, data.session viene vacío y cae al
+  // mensaje de abajo en vez de intentar un redirect sin sesión.
+  if (data.session) {
+    redirect("/dashboard/inicio")
+  }
+
   return {
     success: true,
     message:
