@@ -18,7 +18,7 @@ export function LoginForm({ onSwitch }: { onSwitch: () => void }) {
     <div className="mx-auto w-full max-w-sm">
       <div className="mb-8 text-center">
         <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">Hola de nuevo</h1>
-        <p className="text-sm text-muted-foreground">Inicia sesión para entrar a tu panel</p>
+        <p className="text-sm text-white/70">Inicia sesión para entrar a tu panel</p>
       </div>
 
       <form action={action} className="flex flex-col gap-4">
@@ -36,7 +36,7 @@ export function LoginForm({ onSwitch }: { onSwitch: () => void }) {
                 required
                 autoComplete="email"
                 placeholder="Correo electrónico"
-                className="h-12 rounded-xl border-white/10 bg-black/20 pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
+                className="h-12 rounded-xl auth-field pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
               />
             </div>
             <FieldError errors={state?.errors?.email?.map((message) => ({ message }))} />
@@ -54,7 +54,7 @@ export function LoginForm({ onSwitch }: { onSwitch: () => void }) {
                 required
                 autoComplete="current-password"
                 placeholder="Contraseña"
-                className="h-12 rounded-xl border-white/10 bg-black/20 pr-12 pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
+                className="h-12 rounded-xl auth-field pr-12 pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
               />
               <button
                 type="button"
@@ -70,7 +70,7 @@ export function LoginForm({ onSwitch }: { onSwitch: () => void }) {
           <div className="flex justify-end">
             <Link
               href="/recuperar"
-              className="text-xs font-medium text-primary transition-colors hover:underline"
+              className="text-xs font-medium text-white transition-colors hover:text-primary hover:underline"
             >
               ¿Olvidaste tu contraseña?
             </Link>
@@ -87,12 +87,12 @@ export function LoginForm({ onSwitch }: { onSwitch: () => void }) {
             <ArrowRight className="size-5" />
           </button>
 
-          <p className="pt-2 text-center text-xs text-muted-foreground">
+          <p className="pt-2 text-center text-xs text-white/70">
             ¿No tienes cuenta?
             <button
               type="button"
               onClick={onSwitch}
-              className="ml-1 font-medium text-primary hover:underline"
+              className="ml-1 font-medium text-white hover:text-primary hover:underline"
             >
               Regístrate
             </button>

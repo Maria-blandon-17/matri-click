@@ -156,6 +156,16 @@
 }
 
 @layer utilities {
+  /* Campos de login/registro: fondo sólido del color de la tarjeta + borde blanco.
+     Va como clase propia con !important porque el <Input> base trae `dark:bg-input/30`
+     y las utilidades `!bg-*` de Tailwind v4 no le ganaban de forma fiable. */
+  .auth-field {
+    background-color: var(--card) !important;
+    border-color: rgb(255 255 255 / 0.8) !important;
+  }
+  .auth-field:focus-visible {
+    border-color: var(--primary) !important;
+  }
   .glass-card {
     background-color: rgba(23, 31, 46, 0.92);
     backdrop-filter: blur(20px);
@@ -196,78 +206,67 @@
   }
 }
 
+/* El fondo de TODA la landing (ya no solo el hero, ni la foto de
+   Recraft en public/assets/fondo.webp, retirada) es un único
+   `<WaveCanvas>` (LANDING_WAVE_LAYERS) montado en
+   app/(marketing)/layout.tsx, detrás de Navbar + main + Footer. No
+   necesita clases propias acá: se posiciona con utilidades de
+   Tailwind. Ver components/landing/wave-canvas.tsx — ese archivo
+   también documenta por qué es un solo canvas (antes había uno para
+   el hero y otro para el cuerpo, y la costura entre ambos se notaba).
+*/
+
 /* ============================================================
-   Fondo del hero de la landing — imagen estática (public/assets/fondo.webp).
-   Lo renderiza <HeroBackground> como primer hijo del contenedor de
-   app/(marketing)/layout.tsx, detrás del contenido (que vive en z-10).
-
-   Barato de pintar a propósito: sin animación, sin `filter: blur()`,
-   sin `mask-image` (la imagen ya se funde a negro en sus bordes) y con
-   altura acotada (solo cubre el hero, no toda la página). El único
-   degradado es el de empalme inferior con --background.
+   Ondas de luz del panel de imagen de auth (`AuthVisual`). Mucho más
+   simples que las de la landing (`WaveCanvas`, canvas + blur real):
+   acá son solo dos manchas CSS animando transform/opacity — barato,
+   sin `filter: blur()` — porque esta pantalla es de viewport fijo,
+   sin scroll, y no necesita la fidelidad de cintas con blur.
+   Respeta `prefers-reduced-motion`.
    ============================================================ */
-.hero-aura {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 900px;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  /* Imagen ORIGINAL de Recraft (1344×768, sin recortar) a sangre completa
-     (`cover`) — nunca deja franjas a los lados. En desktop la imagen queda
-     más alta que el contenedor, así que `background-position-y` ajusta a
-     qué altura cae el arco; en móvil manda `height`. Fallback = --background. */
-  background: #040711 url("/assets/fondo.webp") center 70% / cover no-repeat;
-}
-
-/* Funde la imagen con el resto de la página. */
-.hero-aura__fade {
+.auth-wave {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 62%, var(--background) 100%);
+  overflow: hidden;
+  pointer-events: none;
 }
 
-@media (max-width: 640px) {
-  .hero-aura {
-    height: 860px;
-    background-position: center 50%;
+.auth-wave::before,
+.auth-wave::after {
+  content: "";
+  position: absolute;
+  bottom: -25%;
+  width: 75%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(43, 102, 255, 0.4), rgba(43, 102, 255, 0) 70%);
+  animation: auth-wave-drift 9s ease-in-out infinite;
+}
+
+.auth-wave::before {
+  left: -20%;
+}
+
+.auth-wave::after {
+  right: -20%;
+  animation-delay: -4.5s;
+}
+
+@keyframes auth-wave-drift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-24px) scale(1.1);
+    opacity: 0.85;
   }
 }
 
-/* ============================================================
-   Ambiente cobalto suave para el cuerpo de la landing (Módulos,
-   Cómo funciona, Planes, CTA). Arranca por debajo del hero y llega
-   hasta el pie. Mismo criterio que .hero-aura: una sola capa
-   estática, sin `filter: blur()`, sin `mix-blend-mode` y sin
-   animación — solo tres radial-gradient de baja opacidad sobre
-   --background, para que no repinte por frame al hacer scroll.
-
-   Lo renderiza <HeroBackground> (segundo hijo del contenedor de
-   app/(marketing)/layout.tsx) en z-0, detrás del contenido (z-10).
-   ============================================================ */
-.landing-ambient {
-  position: absolute;
-  top: 700px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    /* Resplandor pegado al borde izquierdo, a lo alto */
-    radial-gradient(26rem 64rem at -6% 46%, rgba(43, 102, 255, 0.07) 0%, transparent 68%),
-    /* Resplandor pegado al borde derecho, a lo alto */
-    radial-gradient(26rem 64rem at 106% 56%, rgba(43, 102, 255, 0.06) 0%, transparent 68%),
-    /* Foco superior izquierdo — empalme con el hero */
-    radial-gradient(44rem 28rem at 12% 3%, rgba(43, 102, 255, 0.06) 0%, transparent 70%),
-    /* Foco inferior — hacia el CTA */
-    radial-gradient(40rem 26rem at 40% 82%, rgba(43, 102, 255, 0.05) 0%, transparent 75%);
-}
-
-@media (max-width: 640px) {
-  .landing-ambient {
-    top: 640px;
+@media (prefers-reduced-motion: reduce) {
+  .auth-wave::before,
+  .auth-wave::after {
+    animation: none;
   }
 }

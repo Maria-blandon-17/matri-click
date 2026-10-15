@@ -208,6 +208,8 @@ export interface Database {
           nombre_completo: string | null
           documento: string | null
           rechazado: boolean
+          terminos_aceptados_at: string | null
+          terminos_version: string | null
           id_profesor: string | null
           id_acudiente: string | null
           id_estudiante: string | null
@@ -219,6 +221,8 @@ export interface Database {
           nombre_completo?: string | null
           documento?: string | null
           rechazado?: boolean
+          terminos_aceptados_at?: string | null
+          terminos_version?: string | null
           id_profesor?: string | null
           id_acudiente?: string | null
           id_estudiante?: string | null

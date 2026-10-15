@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
-import { HeroBackground } from "@/components/landing/hero-background"
+import { LANDING_WAVE_LAYERS, WaveCanvas } from "@/components/landing/wave-canvas"
 
 export default function MarketingLayout({
   children,
@@ -12,9 +12,10 @@ export default function MarketingLayout({
       className="dark relative flex min-h-svh flex-col overflow-x-hidden bg-background text-foreground"
       style={{ fontFamily: "var(--font-hanken-grotesk)" }}
     >
-      {/* Preload del fondo del hero para el LCP (Next hoista el <link> al <head>). */}
-      <link rel="preload" as="image" href="/assets/fondo.webp" />
-      <HeroBackground />
+      {/* Un solo canvas de cintas + grilla de puntos detrás de TODA la
+          página (Navbar → Footer) — ver LANDING_WAVE_LAYERS en
+          wave-canvas.tsx para por qué es uno solo y no uno por sección. */}
+      <WaveCanvas layers={LANDING_WAVE_LAYERS} showDots />
       <Navbar />
       <main className="relative z-10 flex-1">{children}</main>
       <Footer />

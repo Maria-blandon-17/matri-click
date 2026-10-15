@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useActionState, useEffect, useState } from "react"
 import { toast } from "sonner"
 import {
@@ -24,7 +25,7 @@ import { cn } from "@/lib/utils"
 const initialState: AuthFormState = null
 
 const inputClassName =
-  "h-12 rounded-xl border-white/10 bg-black/20 pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
+  "h-12 rounded-xl auth-field pl-12 placeholder:text-muted-foreground/40 focus-visible:border-primary focus-visible:ring-0"
 
 export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
   const [state, action, pending] = useActionState(registro, initialState)
@@ -50,7 +51,7 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
     <div className="mx-auto w-full max-w-md">
       <div className="mb-8 text-center">
         <h1 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">Crea tu cuenta</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-white/70">
           Regístrate para gestionar tus matrículas
         </p>
       </div>
@@ -114,7 +115,7 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
           </Field>
 
           <Field>
-            <FieldLabel className="font-label-mono ml-1 text-xs text-muted-foreground uppercase">
+            <FieldLabel className="font-label-mono ml-1 text-xs text-white/70 uppercase">
               Tipo de usuario
             </FieldLabel>
             <input type="hidden" name="rol" value={rol} />
@@ -123,8 +124,8 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 type="button"
                 onClick={() => setRol("acudiente")}
                 className={cn(
-                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
-                  rol === "acudiente" && "border-primary bg-primary/10 text-primary"
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
+                  rol === "acudiente" ? "border-primary bg-primary/10 text-primary" : "auth-field"
                 )}
               >
                 <Users className="size-4.5 sm:size-5" />
@@ -134,8 +135,8 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 type="button"
                 onClick={() => setRol("estudiante")}
                 className={cn(
-                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
-                  rol === "estudiante" && "border-primary bg-primary/10 text-primary"
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
+                  rol === "estudiante" ? "border-primary bg-primary/10 text-primary" : "auth-field"
                 )}
               >
                 <GraduationCap className="size-4.5 sm:size-5" />
@@ -145,8 +146,8 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 type="button"
                 onClick={() => setRol("profesor")}
                 className={cn(
-                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border border-white/10 text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
-                  rol === "profesor" && "border-primary bg-primary/10 text-primary"
+                  "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border text-xs transition-colors sm:flex-row sm:gap-2 sm:text-sm",
+                  rol === "profesor" ? "border-primary bg-primary/10 text-primary" : "auth-field"
                 )}
               >
                 <School className="size-4.5 sm:size-5" />
@@ -201,6 +202,28 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
             <FieldError errors={state?.errors?.confirmPassword?.map((message) => ({ message }))} />
           </Field>
 
+          <Field>
+            <label className="flex cursor-pointer items-start gap-3 text-xs text-white/70">
+              <input
+                type="checkbox"
+                name="terminos"
+                required
+                className="mt-0.5 size-4 shrink-0 cursor-pointer accent-primary"
+              />
+              <span>
+                Acepto los{" "}
+                <Link
+                  href="/terminos"
+                  target="_blank"
+                  className="font-medium text-white hover:text-primary hover:underline"
+                >
+                  términos y condiciones
+                </Link>
+              </span>
+            </label>
+            <FieldError errors={state?.errors?.terminos?.map((message) => ({ message }))} />
+          </Field>
+
           {state?.message && (
             <p className={cn("text-sm", state.success ? "text-emerald-400" : "text-destructive")}>
               {state.message}
@@ -216,12 +239,12 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
             <ArrowRight className="size-5" />
           </button>
 
-          <p className="pt-2 text-center text-xs text-muted-foreground">
+          <p className="pt-2 text-center text-xs text-white/70">
             ¿Ya tienes cuenta?
             <button
               type="button"
               onClick={onSwitch}
-              className="ml-1 font-medium text-primary hover:underline"
+              className="ml-1 font-medium text-white hover:text-primary hover:underline"
             >
               Inicia sesión
             </button>

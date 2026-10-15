@@ -88,7 +88,8 @@ supabase/migrations/   0001_schema … 0006_endurecer_permisos_funciones,
                         0007_solicitudes_matricula (+ 0007b_..._policies), 0008_cuentas_pendientes,
                         0009_estados_matricula (agrega 'En revisión'/'Rechazada'/'Expirada' al
                         enum estado_matricula), 0010_expirar_matriculas (pg_cron: job diario que
-                        pasa a 'Expirada' — habilitar la extensión pg_cron en el dashboard antes)
+                        pasa a 'Expirada' — habilitar la extensión pg_cron en el dashboard antes),
+                        0011_aceptacion_terminos (perfiles.terminos_aceptados_at/terminos_version)
                         — correr en ese orden en el SQL Editor de Supabase
                         (no hay CLI de supabase configurada, se aplican a mano). Agregar valores a
                         un enum: un archivo con solo los `ADD VALUE` (Postgres no deja usarlos en
@@ -292,12 +293,28 @@ animación (un refresh o visita directa cargan la ruta correcta). En `< lg` no h
 imagen: solo el formulario con el fundido. Respeta `prefers-reduced-motion`.
 
 Piezas compartidas en `components/auth/`:
-- `auth-visual.tsx` (`<AuthVisual className>`) — panel de imagen (`/assets/fondo.webp` +
-  degradado + marca que enlaza a `/` + claim). El alto, el padding y el `rounded-*` los pone
+- `auth-visual.tsx` (`<AuthVisual className>`, client) — panel de imagen: **carrusel** de 3 fotos
+  (`public/assets/auth-carousel/slide-{1,2,3}.webp`, fundido por opacity cada 5 s + puntos
+  clicables) + capa `.auth-wave` (2 manchas CSS que laten, solo transform/opacity) + degradado +
+  marca que enlaza a `/` + claim. Es el mismo componente en login y registro, así que el carrusel
+  es el mismo al deslizarse. El alto, el padding y el `rounded-*` los pone
   cada consumidor por `className` (en `AuthFlow` va con `p-3` en el wrapper + `rounded-[28px]`
   para que las esquinas del lado interno se vean redondeadas en ambos lados).
 - `login-form.tsx`, `registro-form.tsx` — los formularios (client, `useActionState`), con prop
-  `onSwitch`. Labels `sr-only` + placeholder, inputs `h-12 rounded-xl bg-black/20 border-white/10`.
+  `onSwitch`. Labels `sr-only` + placeholder, inputs `h-12 rounded-xl auth-field` (clase en
+  `globals.css`: fondo `--card` sólido + borde blanco, ambos `!important`: el `<Input>` base trae
+  `dark:bg-input/30` y las utilidades `!bg-*` de Tailwind v4 no le ganaban de forma fiable — un
+  fondo translúcido dejaba pasar el brillo del canvas y "lavaba" los campos). Textos sueltos sobre
+  el fondo animado van en `text-white` / `text-white/70`, **sin `text-shadow`** (se veía borroso).
+- El panel del formulario de `AuthFlow` es una tarjeta `rounded-[28px]` (`isolate` + `overflow-hidden`)
+  con un `<WaveCanvas layers={AUTH_WAVE_LAYERS} showDots />` detrás (`-z-20`; el degradado
+  translúcido va en `-z-10`). **`isolate` es obligatorio**: sin él los z-index negativos se escapan
+  detrás del `bg` de la propia tarjeta y el canvas dibuja pero no se ve.
+- `registro-form.tsx` tiene checkbox obligatorio `terminos` (enlaza a `/terminos`). Se valida en
+  `registroSchema` (`z.literal("on")`) y la acción guarda `terminos_aceptados_at` +
+  `terminos_version` (`TERMINOS_VERSION` en `lib/validations/auth.ts`; subirla si cambia el texto)
+  en `perfiles` con un `update` **aparte** del de documento/vinculación, para que si la migración
+  0011 no está aplicada no se pierda la vinculación (solo hace `console.error`).
 - `auth-shell.tsx` (`<AuthShell>`) — cascarón split SIN slide, para `/recuperar` y
   `/actualizar-password`.
 
@@ -326,21 +343,37 @@ puedes usar hoy": Estudiantes, Matrículas, Académico, Administración) → `Ho
 `Features` (duplicaba literalmente 2 de sus 3 tarjetas con `Modules`) — si se necesita un
 diferenciador que no sea "módulo", agregarlo como copy dentro de `Modules`/`Planes`, no revivir
 una sección `Features` aparte. También se eliminó `DashboardPreview` ("Vista previa del panel"):
-el `Hero` es ahora una sola columna centrada (badge + titular + subtítulo + 2 CTA) con fondo
-`<HeroBackground>` (imagen a sangre completa, `.hero-aura*` en `globals.css`), sin la tarjeta
+el `Hero` es ahora una sola columna centrada (badge + titular + subtítulo + 2 CTA), sin la tarjeta
 de ejemplo del panel.
 
-`<HeroBackground>` además pinta `.landing-ambient` (`globals.css`): una sola capa estática
-`position: absolute` que arranca por debajo del hero (`top: 700px`, 640px en móvil) y llega al
-pie, con 4 `radial-gradient` cobalto de baja opacidad (`rgba(43,102,255,0.05–0.07)`) — dos
-pegados a los bordes izquierdo/derecho y dos de empalme arriba/abajo. Mismo criterio que
-`.hero-aura`: **sin `filter: blur()`, sin `mix-blend-mode`, sin animación** (la landing no debe
-repintar por frame al hacer scroll). Para subir/bajar la intensidad se tocan los alfas ahí.
+**Fondo de TODA la landing**: un único `<WaveCanvas layers={LANDING_WAVE_LAYERS} showDots />`
+(`components/landing/wave-canvas.tsx`, client) montado en `app/(marketing)/layout.tsx` detrás de
+Navbar + `<main>` + Footer (los tres tienen `z-10`/`z-50` explícito para quedar encima). Dibuja con
+`<canvas>` cintas de luz con `filter: blur()` (azul/índigo/cian de marca, adaptadas de una
+referencia de Stitch) + grilla de puntos reactiva al cursor. Decisiones que costaron varias
+iteraciones:
+- **Un solo canvas, no uno por sección**: con dos (hero + cuerpo) la grilla de puntos de cada uno
+  empezaba en su borde y se veía una costura. `startY/endY` son fracciones de la altura TOTAL de la
+  página; las 5 primeras capas son la composición original del hero reescalada al primer ~16 %.
+- **Dos `<canvas>` apilados**: cintas (caras por el blur, se redibujan cada ~42 ms) y puntos
+  (baratos, cada frame). Antes iban juntos y el blur bajaba el fps → los puntos "perseguían" el
+  cursor con rezago. `MOUSE_LERP = 0.35`.
+- Pausa con `IntersectionObserver` + `visibilitychange`; con `prefers-reduced-motion` dibuja un solo
+  frame estático. El usuario aceptó explícitamente el costo de performance de animar la landing
+  (antes era estática por un intento viejo con blur que sí repintaba al hacer scroll) — si en algún
+  dispositivo va lenta, bajar `blur`/capas en `LANDING_WAVE_LAYERS` antes que quitar el canvas.
+- `AUTH_WAVE_LAYERS` (mismo archivo) es la composición original del hero sin reescalar, para el
+  panel del formulario de login/registro. La foto `fondo.webp` y las clases `.hero-aura*` /
+  `.landing-ambient` ya no existen.
 
-El `Footer` (`components/landing/footer.tsx`) es de 3 columnas (marca + claim · Navegación
-`#modules`/`#how-it-works`/`#planes` · Cuenta `/login`/`/registro`) + barra inferior con
-copyright. Solo enlaza a rutas/anclas que existen — no hay columna "Legal" ni iconos sociales
-porque no hay páginas de términos/privacidad ni cuentas sociales (si se agregan, ver `ROADMAP.md`).
+El `Footer` (`components/landing/footer.tsx`) es de 4 columnas (marca + claim · Navegación
+`#modules`/`#how-it-works`/`#planes` · Cuenta `/login`/`/registro` · Legal `/terminos`) + barra
+inferior con copyright. Junto al logo de MatriClick van el de la institución
+(`public/assets/institucion-logo.jpeg`, 180 px, en círculo blanco) y el del SENA
+(`public/assets/sena-logo.png`, fondo negro quitado). **Sin borde superior** (`border-t` quitado a
+propósito: se veía como una línea separando secciones). Solo enlaza a rutas/anclas que existen — no
+hay iconos sociales porque no hay cuentas sociales. `/terminos` (`app/(marketing)/terminos`) es un
+**borrador genérico escrito por IA, sin revisión legal** (cita Ley 1581 de 2012).
 
 Regla general: todo el copy debe corresponder a algo que **de verdad funciona hoy** en
 `/dashboard` — antes de agregar contenido nuevo, verificar contra el código real, no inventar
@@ -380,7 +413,7 @@ tokens viven en el bloque `.dark` de `app/globals.css`.
 
 - Al cambiar la paleta hay que tocar, además del bloque `.dark`: las utilidades de
   `app/globals.css` (`glass-card`, `glass-modal`, `neon-button`, `bg-hero-glow` — tienen rgba
-  hardcodeados), el fallback de `.hero-aura`, `.landing-ambient`, el `radial-gradient` inline de
+  hardcodeados), los colores de `LANDING_WAVE_LAYERS`/`AUTH_WAVE_LAYERS` (`wave-canvas.tsx`) y `.auth-wave`, el `radial-gradient` inline de
   `app/dashboard/layout.tsx`, y los `radial-gradient` / degradados `#040711` inline de
   `components/auth/{auth-shell,auth-flow,auth-visual}.tsx` (`app/(auth)/layout.tsx` ya no tiene
   fondo). Los `shadow-[...]`/`stroke` con azul
@@ -400,28 +433,9 @@ tokens viven en el bloque `.dark` de `app/globals.css`.
   (`--font-jetbrains-mono`, clase `.font-label-mono`) para labels/mono-data — ambas cargadas una
   sola vez en `app/layout.tsx` y aplicadas vía `style={{ fontFamily: ... }}` en cada layout con
   `dark`, no en `:root`/body global.
-- Fondo del hero de la landing: `<HeroBackground>` (`components/landing/hero-background.tsx`)
-  es un `<div>` cuyo fondo lo pone `.hero-aura` en `app/globals.css` con
-  `background: #040711 url(/assets/fondo.webp) center 70% / cover` a sangre completa. La imagen
-  (horizonte oscuro + arco de luz azul) se generó en **Recraft** y se usa **tal cual** (solo
-  PNG→WebP por peso): fuente sin comprimir en `public/assets/fondo1.png`, servida
-  `public/assets/fondo.webp` (~45 KB). Claves:
-  - **`cover` a ancho completo** — nunca deja franjas a los lados. En desktop la imagen queda
-    más alta que el contenedor, así que `background-position-y` (hoy `70%`) ajusta a qué altura
-    cae el arco; en móvil (`@media (max-width: 640px)`) no hay holgura vertical, manda `height`.
-    Si se cambia la imagen hay que re-tunear `height` + `background-position` mirando el
-    resultado en desktop y a 390 px.
-  - **Sin animación, sin `filter: blur()`, sin `mask-image`, sin `next/image`** — todo eso se
-    probó y hacía la landing lenta (repintados por frame). La imagen ya se funde a negro en
-    sus bordes; solo hay un degradado inferior de empalme (`.hero-aura__fade`).
-  - Si la imagen se ve borrosa es reescalado (1344 px de ancho estirados a la pantalla). El
-    arreglo real es subir una versión con Upscale de Recraft (~2700-4000 px) y regenerar el
-    webp; no toquetear CSS.
-  - El **`Navbar` es transparente** (`sticky top-0 z-50` y nada más), **no** `.glass-card`: el
-    `backdrop-filter` de un header sticky sobre la imagen se re-desenfocaba cada frame de
-    scroll, y además dejaba una línea divisoria fea. Ahora el top es una sola superficie
-    continua con el fondo del hero por detrás.
-  - `app/(marketing)/layout.tsx` incluye un `<link rel="preload" as="image">` del webp (LCP).
+- Fondo de la landing: ver "Fondo de TODA la landing" arriba (canvas). El **`Navbar` es
+  transparente** (`sticky top-0 z-50` y nada más), **no** `.glass-card`: el `backdrop-filter` de un
+  header sticky sobre el fondo se re-desenfocaba cada frame de scroll y dejaba una línea divisoria.
 - Logo: `components/brand/logo.tsx`, usa `public/assets/logo-icon.png` (recorte cuadrado del
   ícono, fondo blanco opaco — el intento de fondo transparente dejó "agujeros" en el papel
   blanco del propio diseño, así que se usa opaco dentro de una placa blanca redondeada). También

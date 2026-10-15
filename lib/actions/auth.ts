@@ -10,6 +10,7 @@ import {
   nuevaPasswordSchema,
   recuperarSchema,
   registroSchema,
+  TERMINOS_VERSION,
 } from "@/lib/validations/auth"
 
 export type AuthFormState = {
@@ -67,6 +68,7 @@ export async function registro(
     confirmPassword: formData.get("confirmPassword"),
     rol: formData.get("rol"),
     documento: formData.get("documento"),
+    terminos: formData.get("terminos"),
   })
 
   if (!validated.success) {
@@ -115,6 +117,19 @@ export async function registro(
         ...(match ? { [columnaId]: match[columnaId] } : {}),
       })
       .eq("id", data.user.id)
+
+    // Aparte del update de arriba a propósito: si la migración 0011 aún no se aplicó, que
+    // este update falle no debe tumbar el guardado del documento / la vinculación.
+    const { error: terminosError } = await admin
+      .from("perfiles")
+      .update({
+        terminos_aceptados_at: new Date().toISOString(),
+        terminos_version: TERMINOS_VERSION,
+      })
+      .eq("id", data.user.id)
+    if (terminosError) {
+      console.error("No se pudo guardar la aceptación de términos:", terminosError.message)
+    }
   }
 
   return {

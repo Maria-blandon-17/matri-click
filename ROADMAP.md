@@ -276,3 +276,13 @@ landing nunca puede desincronizarse visualmente del dashboard real: si el diseñ
 componentes cambia, la vista previa cambia con ellos automáticamente. Unificaron también los
 encabezados de sección (Vista previa del panel / Módulos / Cómo funciona / Planes) en un mismo
 patrón: eyebrow gris pequeño + título blanco centrado + barra de acento azul + subtítulo.
+
+## Términos y condiciones (✅ implementado, ⏳ 2 pendientes)
+
+`/terminos` + checkbox obligatorio en `/registro` + columnas `perfiles.terminos_aceptados_at` /
+`terminos_version` (migración `0011_aceptacion_terminos.sql`). Pendientes:
+- **Aplicar la migración 0011** en el SQL Editor de Supabase (hasta entonces la aceptación no se
+  guarda; el registro igual funciona).
+- **Revisión legal del texto** de `/terminos` (es un borrador genérico) y, si el usuario puede
+  editar su propio `perfiles` por RLS, proteger esas dos columnas con un trigger (mismo patrón que
+  `documento`) para que la prueba de aceptación no sea manipulable.

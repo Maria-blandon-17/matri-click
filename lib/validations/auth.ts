@@ -23,6 +23,9 @@ export const nuevaPasswordSchema = z
     path: ["confirmPassword"],
   })
 
+/** Versión vigente del texto de /terminos; subirla si el texto cambia. */
+export const TERMINOS_VERSION = "2026-10"
+
 export const registroSchema = z
   .object({
     nombreCompleto: z
@@ -41,6 +44,7 @@ export const registroSchema = z
       .string()
       .trim()
       .min(4, { message: "Ingresa un número de documento válido." }),
+    terminos: z.literal("on", { message: "Debes aceptar los términos y condiciones." }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden.",
