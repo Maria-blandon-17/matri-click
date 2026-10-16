@@ -97,7 +97,10 @@ supabase/migrations/   0001_schema … 0006_endurecer_permisos_funciones,
                         cada matrícula ahora que puede no ser el acudiente vinculado al
                         estudiante), 0014_motivo_estado_matricula (agrega
                         `matriculas.motivo_estado`, motivo opcional del admin al rechazar o
-                        cancelar, visible también para el acudiente)
+                        cancelar, visible también para el acudiente), 0015_bloquear_campos_
+                        perfil_y_grupos_estudiante (arregla escalación de privilegios en
+                        `perfiles` + agrega `grupos_select_estudiante` — ver "Auditoría de
+                        control de acceso" en ROADMAP.md)
                         — correr en ese orden en el SQL Editor de Supabase
                         (no hay CLI de supabase configurada, se aplican a mano). Agregar valores a
                         un enum: un archivo con solo los `ADD VALUE` (Postgres no deja usarlos en

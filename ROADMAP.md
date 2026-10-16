@@ -5,6 +5,42 @@ implementado y verificado (`tsc` + `eslint` + `next build` limpios); lo marcado 
 acción externa al código (pago, cuenta de terceros) y queda bloqueado hasta que se resuelva
 afuera; lo marcado 💡 es aspiracional a futuro, sin fecha.
 
+## Auditoría de control de acceso (✅ resuelto, 2026-10-15)
+
+El usuario pidió una revisión completa de las 14 migraciones y los Server Actions de
+autorización que dependen de ellas. Dos hallazgos:
+
+- **Crítico — escalación de privilegios en `perfiles`.** `perfiles_update_propio`
+  (`0003_rls_policies.sql`) dejaba que cualquier usuario editara su propia fila de `perfiles`
+  sin restricción de columnas (solo exigía `id = auth.uid()`). Cualquier cuenta autenticada
+  podía, con una llamada directa a la API REST de Supabase (URL y anon key son públicas, el
+  token de sesión también es accesible desde el cliente) — sin pasar por la UI —, hacer
+  `PATCH /perfiles?id=eq.<su-id> {"rol":"admin"}` y volverse administrador del sistema
+  completo. Lo mismo con `id_acudiente`/`id_estudiante`/`id_profesor`: una cuenta podía
+  auto-vincularse a la ficha de **otra familia** y ver sus datos. Las otras tres tablas con
+  autoedición (`profesores`, `acudientes`, `estudiantes`) ya tenían un trigger que bloquea
+  columnas sensibles desde `0008_cuentas_pendientes.sql` — se les olvidó aplicar el mismo
+  patrón a `perfiles`, la tabla más sensible de todas (es la que define el rol).
+  - Arreglo: `supabase/migrations/0015_bloquear_campos_perfil_y_grupos_estudiante.sql` agrega
+    `trg_perfiles_bloquear_campos` (mismo patrón que las otras tres tablas) bloqueando
+    `rol`/`id_profesor`/`id_acudiente`/`id_estudiante`/`rechazado` en autoedición.
+  - Defensa en profundidad (no depender solo de RLS; la Server Action es un endpoint HTTP más):
+    `vincularAcudiente`/`vincularEstudiante`/`vincularProfesor` (`lib/actions/cuentas.ts`) y
+    `aceptarCuenta`/`rechazarCuenta`/`descartarCuenta` (`lib/actions/cuentas-pendientes.ts`,
+    `requireAdmin()`) ahora verifican `perfil.rol === "admin"` explícitamente al entrar, en vez
+    de confiar en que RLS las bloqueara silenciosamente.
+- **Bug funcional (no de seguridad) — estudiante sin acceso de lectura a `grupos`.** Ninguna
+  política RLS dejaba al rol `estudiante` leer `grupos` (sí existía para acudiente/admin/
+  profesor-director). Un estudiante viendo su propia matrícula en Inicio o en
+  `/dashboard/matriculas` veía el grupo y el grado en blanco (`—`), aunque tuviera una
+  matrícula activa real — el embed de `grupos` en la consulta devolvía `null` al no tener
+  permiso. Arreglo: política `grupos_select_estudiante` en la misma migración `0015`.
+
+Revisado y descartado como falso positivo: `aceptarCuenta`/`vincular*` usan el cliente ligado a
+RLS (no el service-role) para sus inserts/updates en `profesores`/`acudientes`/`estudiantes`/
+`perfiles`, así que ya estaban protegidos por las políticas `*_admin_all` existentes — el
+`requireAdmin()` de arriba es defensa en profundidad, no el arreglo de un hueco ahí.
+
 ## Errores de "Eliminar" no llegaban al usuario (✅ resuelto)
 
 Al intentar borrar un profesor que dirige un grupo (o cualquier registro referenciado por otra

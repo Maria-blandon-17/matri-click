@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import type { RolUsuario } from "@/lib/types/database.types"
 
 export type PerfilPendiente = {
@@ -88,6 +89,14 @@ async function vincular(
   registroId: string,
   path: string
 ) {
+  // Defensa en profundidad: esta Server Action es un endpoint HTTP más, invocable sin pasar por
+  // la UI (que ya oculta este control a no-admin) — no basta con confiar en que RLS la bloquee.
+  // Ver ROADMAP.md (auditoría 2026-10-15): la propia falta de esta verificación, combinada con
+  // una política RLS de "perfiles" sin restricción de columnas, permitía que cualquier cuenta se
+  // auto-vinculara a la ficha de otra persona.
+  const perfil = await getPerfilActual()
+  if (perfil?.rol !== "admin") return
+
   const supabase = await createClient()
   const update =
     campo === "id_acudiente"

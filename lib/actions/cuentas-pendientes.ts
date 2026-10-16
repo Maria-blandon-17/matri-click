@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { getPerfilActual } from "@/lib/actions/perfil"
 import type { RolUsuario } from "@/lib/types/database.types"
 import type { DeleteResult } from "@/lib/actions/types"
 import { mensajeErrorEliminar } from "@/lib/actions/types"
@@ -74,7 +75,19 @@ export async function getCuentasPendientes(): Promise<CuentaPendiente[]> {
   }))
 }
 
+// Defensa en profundidad en las tres acciones de abajo: son Server Actions, endpoints HTTP
+// invocables sin pasar por la UI (que ya las oculta a no-admin) — no basta con que RLS las
+// bloquee. Ver ROADMAP.md (auditoría 2026-10-15).
+async function requireAdmin(): Promise<DeleteResult | null> {
+  const perfilActual = await getPerfilActual()
+  if (perfilActual?.rol !== "admin") return { error: "No tienes permiso para esta acción." }
+  return null
+}
+
 export async function aceptarCuenta(perfilId: string): Promise<DeleteResult> {
+  const noAutorizado = await requireAdmin()
+  if (noAutorizado) return noAutorizado
+
   const supabase = await createClient()
   const { data: perfil } = await supabase
     .from("perfiles")
@@ -137,6 +150,9 @@ export async function aceptarCuenta(perfilId: string): Promise<DeleteResult> {
 }
 
 export async function rechazarCuenta(perfilId: string): Promise<DeleteResult> {
+  const noAutorizado = await requireAdmin()
+  if (noAutorizado) return noAutorizado
+
   const supabase = await createClient()
   const { error } = await supabase.from("perfiles").update({ rechazado: true }).eq("id", perfilId)
   if (error) return { error: mensajeErrorEliminar(error) }
@@ -144,6 +160,9 @@ export async function rechazarCuenta(perfilId: string): Promise<DeleteResult> {
 }
 
 export async function descartarCuenta(perfilId: string): Promise<DeleteResult> {
+  const noAutorizado = await requireAdmin()
+  if (noAutorizado) return noAutorizado
+
   const supabase = await createClient()
   const { error } = await supabase.from("perfiles").delete().eq("id", perfilId)
   if (error) return { error: mensajeErrorEliminar(error) }
