@@ -8,11 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { CrudDialog } from "@/components/dashboard/crud/crud-dialog"
+import { SedeImagenInput } from "@/components/dashboard/sedes/sede-imagen-input"
 import type { Database } from "@/lib/types/database.types"
 
 type Sede = Database["public"]["Tables"]["sedes"]["Row"]
 
-export function SedeFormDialog({ sede }: { sede?: Sede }) {
+export function SedeFormDialog({
+  sede,
+  trigger,
+}: {
+  sede?: Sede
+  trigger?: React.ReactElement
+}) {
   const isEdit = Boolean(sede)
   const action = isEdit
     ? actualizarSede.bind(null, sede!.id_sede)
@@ -23,7 +30,8 @@ export function SedeFormDialog({ sede }: { sede?: Sede }) {
       title={isEdit ? "Editar sede" : "Nueva sede"}
       action={action}
       trigger={
-        isEdit ? (
+        trigger ??
+        (isEdit ? (
           <Button variant="ghost" size="icon-sm" className="text-muted-foreground opacity-50 transition-opacity group-hover:opacity-100 hover:text-primary">
             <Pencil className="size-4" />
           </Button>
@@ -32,7 +40,7 @@ export function SedeFormDialog({ sede }: { sede?: Sede }) {
             <Plus className="size-4" />
             Nueva sede
           </Button>
-        )
+        ))
       }
     >
       {(state, pending) => (
@@ -66,6 +74,7 @@ export function SedeFormDialog({ sede }: { sede?: Sede }) {
                 defaultValue={sede?.telefono ?? ""}
               />
             </Field>
+            <SedeImagenInput defaultUrl={sede?.imagen_url} />
           </FieldGroup>
           <DialogFooter className="mt-4 -mx-4 -mb-4 rounded-b-2xl border-t border-white/10 bg-black/20 p-4">
             <DialogClose

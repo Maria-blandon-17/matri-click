@@ -31,6 +31,7 @@ export interface Database {
           nombre_sede: string
           direccion: string | null
           telefono: string | null
+          imagen_url: string | null
           created_at: string
         }
         Insert: {
@@ -38,6 +39,7 @@ export interface Database {
           nombre_sede: string
           direccion?: string | null
           telefono?: string | null
+          imagen_url?: string | null
           created_at?: string
         }
         Relationships: []

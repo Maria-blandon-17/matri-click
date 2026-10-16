@@ -100,7 +100,10 @@ supabase/migrations/   0001_schema … 0006_endurecer_permisos_funciones,
                         cancelar, visible también para el acudiente), 0015_bloquear_campos_
                         perfil_y_grupos_estudiante (arregla escalación de privilegios en
                         `perfiles` + agrega `grupos_select_estudiante` — ver "Auditoría de
-                        control de acceso" en ROADMAP.md)
+                        control de acceso" en ROADMAP.md), 0016_imagen_sede (agrega
+                        `sedes.imagen_url`), 0017_storage_imagenes_sedes (políticas RLS de
+                        `storage.objects` para el bucket `sedes` — ver "Sedes: tarjetas con
+                        imagen" más abajo)
                         — correr en ese orden en el SQL Editor de Supabase
                         (no hay CLI de supabase configurada, se aplican a mano). Agregar valores a
                         un enum: un archivo con solo los `ADD VALUE` (Postgres no deja usarlos en
@@ -534,13 +537,57 @@ tokens viven en el bloque `.dark` de `app/globals.css`.
   `CrudDialog` + `DeleteButton` (`components/dashboard/crud/`). Para cambiar el look de los
   modales/formularios de **todas** las pantallas de catálogo a la vez, edita esos dos archivos
   en vez de cada página.
-- Paginación: las 8 tablas de listado (las de arriba + Matrículas) usan
+- Paginación: las 7 tablas de listado (Grados, Grupos, Periodos, Profesores, Acudientes,
+  Estudiantes y Matrículas — **Sedes ya no**, ver abajo) usan
   `components/dashboard/data-table.tsx` (`DataTable`, client component genérico con
   `header`/`renderRow`) — filas por página configurable (10/25/50), controles abajo a la derecha.
   Cada entidad tiene su propio wrapper cliente (`<entidad>-table.tsx`) que le pasa el render de
   fila; el `page.tsx` de cada pantalla sigue siendo Server Component y solo hace fetch + pasa la
   data cruda (no se puede pasar una función `renderRow` desde un Server Component directo a
   `DataTable`, por eso existe la capa intermedia de wrappers cliente).
+
+## Sedes: tarjetas con imagen (`/dashboard/administracion/sedes`)
+
+Única pantalla de catálogo que **no** usa `DataTable` — en vez de tabla, tarjetas tipo
+`components/dashboard/sedes/sedes-cards.tsx` (imagen de portada, badge de nivel educativo,
+dirección con link a Google Maps, teléfono, barra de aforo ocupado, tarjeta punteada "Registrar
+nueva sede" para admin). Decisión explícita del usuario (2026-10-15), que pasó un mockup HTML de
+referencia (Tailwind/paleta índigo) — se adaptó la estructura pero con los tokens propios del
+proyecto (`#2b66ff`, `glass-card`, bordes blancos al 10 %), nunca los colores literales del
+mockup. `SedeFormDialog`/`CrudDialog`/`DeleteButton` se siguen reutilizando igual que en el resto
+de catálogos — solo cambió cómo se listan, no cómo se edita/borra.
+
+- **Solo datos reales, nunca inventados**: el mockup traía campos que no existen en el modelo
+  (correo, aforo/cupos, conteo de aulas, coordinador/a, código institucional, badge "Sede
+  Activa"). Se descartaron los que no son derivables; `getSedesConEstadisticas()`
+  (`lib/actions/sedes.ts`) calcula en vivo, a partir de `grupos`/`grados`/`matriculas`, lo que sí
+  es real: cantidad de grupos, cupo total (`sum(cupo_maximo)`), matrículas en estado `Activa` (→
+  % de aforo) y el/los nivel(es) educativo(s) presentes en esa sede (distinct
+  `grados.nivel_educativo` de sus grupos). Si una sede todavía no tiene grupos, la tarjeta
+  muestra "Aún no tiene grupos asignados" en vez de un 0 % falso.
+- **`sedes.imagen_url`** (migración `0016_imagen_sede.sql`, columna `text` nullable) guarda la
+  URL de portada. Puede ser una ruta local (`/assets/sedes/...`, para las 3 sedes reales
+  cargadas a mano, imágenes en `public/assets/sedes/`) o una URL pública de Supabase Storage.
+- **Subida de imagen desde el explorador**: `components/dashboard/sedes/sede-imagen-input.tsx`
+  (client) — al elegir el archivo, sube directo a Storage con el cliente del browser
+  (`lib/supabase/client.ts`, sesión del usuario, no el admin client) y llena un `<input
+  type="hidden" name="imagenUrl">` con la URL pública resultante; el resto del formulario sigue
+  siendo el flujo normal de `CrudDialog` + Server Action (`crearSede`/`actualizarSede`), que solo
+  ve un string más en el `FormData`. Vista previa con `<img>` normal (no `next/image`: el
+  preview inicial es un `blob:` URL del archivo recién elegido, que `next/image` no soporta).
+  Bucket **`sedes`** en Supabase Storage: público (así las tarjetas cargan la imagen sin auth),
+  creado a mano vía API de Storage (`POST /storage/v1/bucket`, no hay botón de "crear bucket" en
+  una migración SQL); `allowed_mime_types` restringido a jpeg/png/webp, `file_size_limit` 5 MB.
+  Políticas RLS de **escritura** en `storage.objects` (migración `0017_storage_imagenes_sedes.sql`,
+  usa `public.rol_actual()` igual que el resto de políticas del proyecto): solo `admin` puede
+  `insert`/`update`/`delete` en ese bucket — la lectura es pública por el flag del bucket, no por
+  policy. Si se agrega un bucket nuevo para otra entidad, replicar el mismo patrón (bucket público
+  + políticas de escritura solo-admin), no dejarlo sin políticas (deniega todo por defecto) ni
+  marcarlo privado si las imágenes deben verse sin sesión.
+- `next.config.ts` tiene `images.remotePatterns` apuntando al hostname del proyecto Supabase
+  (`xblgtgyawnljqoszpjnf.supabase.co`, `/storage/v1/object/public/**`) — sin esto `next/image`
+  rechaza las URLs públicas de Storage con "hostname no configurado". Si se cambia de proyecto
+  Supabase, actualizar este hostname.
 
 ## Cuentas de prueba
 

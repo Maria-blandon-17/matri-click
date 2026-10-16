@@ -4,6 +4,7 @@ export const sedeSchema = z.object({
   nombreSede: z.string().trim().min(2, { message: "El nombre es requerido." }),
   direccion: z.string().trim().optional().or(z.literal("")),
   telefono: z.string().trim().optional().or(z.literal("")),
+  imagenUrl: z.string().trim().optional().or(z.literal("")),
 })
 export type SedeInput = z.infer<typeof sedeSchema>
 
