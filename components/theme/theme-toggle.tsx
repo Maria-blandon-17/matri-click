@@ -46,7 +46,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       onClick={() => setStoredTheme(theme === "dark" ? "light" : "dark")}
       aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-sidebar-border text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
         className
       )}
     >

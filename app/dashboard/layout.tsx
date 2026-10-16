@@ -5,6 +5,7 @@ import { getMatriculasPendientesCount } from "@/lib/actions/matriculas"
 import { getCuentasPendientesCount } from "@/lib/actions/cuentas-pendientes"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Topbar } from "@/components/dashboard/topbar"
+import { MainThemeScope } from "@/components/dashboard/main-theme-scope"
 
 export default async function DashboardLayout({
   children,
@@ -29,7 +30,7 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="flex min-h-svh text-foreground"
+      className="flex min-h-svh gap-4 p-3 text-foreground sm:p-4"
       style={{
         fontFamily: "var(--font-hanken-grotesk)",
         background:
@@ -45,24 +46,14 @@ export default async function DashboardLayout({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5">
           <Topbar
             nombre={perfil.nombre_completo}
             correo={perfil.email}
             rol={perfil.rol}
             badges={badges}
           />
-          {/* Forzado oscuro a propósito (fase 1 del modo claro): el shell
-              (este layout, Sidebar, Topbar) ya responde al toggle, pero las
-              páginas de catálogo/widgets todavía usan colores hardcodeados
-              que asumen fondo oscuro (bg-white/5, border-white/10, etc.) —
-              convertirlas es la fase 2. En modo oscuro este `dark` no
-              cambia nada visualmente (--background ya es el mismo oscuro
-              por fuera); en modo claro queda como un panel oscuro sobre el
-              canvas claro, a propósito. */}
-          <main className="theme-dark-forced min-w-0 flex-1 space-y-5 rounded-2xl bg-background p-4 text-foreground sm:p-6">
-            {children}
-          </main>
+          <MainThemeScope>{children}</MainThemeScope>
         </div>
       </div>
     </div>

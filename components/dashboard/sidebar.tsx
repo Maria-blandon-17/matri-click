@@ -230,17 +230,14 @@ export function SidebarContent({
 
       <SidebarNavContent onNavigate={onNavigate} rol={rol} badges={badges} />
 
-      <div className="group relative mt-4 cursor-default overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/20 to-transparent p-4">
-        <div className="relative z-10 flex items-center gap-3">
-          <Sparkles className="size-5 text-primary" />
-          <div>
-            <p className="text-sm">Acceso Premium</p>
-            <p className="font-label-mono text-[10px] text-muted-foreground">
-              Potenciado con IA
-            </p>
-          </div>
-        </div>
-      </div>
+      <Link
+        href="/#planes"
+        onClick={onNavigate}
+        className="mt-4 flex items-center gap-1.5 px-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <Sparkles className="size-3" />
+        MatriClick Pro — Próximamente
+      </Link>
 
       <SidebarProfile nombre={nombre} correo={correo} onNavigate={onNavigate} />
     </>
@@ -259,7 +256,7 @@ export function Sidebar({
   correo?: string | null
 }) {
   return (
-    <aside className="theme-dark-forced sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground md:flex">
+    <aside className="theme-dark-forced sticky top-3 hidden h-[calc(100svh-1.5rem)] w-[248px] shrink-0 flex-col gap-4 overflow-y-auto rounded-3xl border border-sidebar-border bg-sidebar p-4 text-sidebar-foreground sm:top-4 sm:h-[calc(100svh-2rem)] md:flex">
       <SidebarContent rol={rol} badges={badges} nombre={nombre} correo={correo} />
     </aside>
   )

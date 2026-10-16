@@ -21,6 +21,22 @@ export async function getEstudiantes(): Promise<EstudianteConAcudiente[]> {
   return (data ?? []) as unknown as EstudianteConAcudiente[]
 }
 
+// A partir de la migración 0012, `estudiantes_select_acudiente` (RLS) dejó de restringir a
+// "solo los suyos" — un acudiente ahora puede LEER cualquier estudiante, porque necesita elegir
+// entre todos al solicitar una matrícula. `getEstudiantes()` ya no sirve para mostrar "mis
+// estudiantes" (devolvería la plataforma entera); esta función sí filtra explícitamente por
+// `id_acudiente`, a nivel de query — un filtro de aplicación, no de RLS, así que sigue
+// funcionando sin importar qué tan ancha sea la política de SELECT.
+export async function getEstudiantesDeAcudiente(idAcudiente: string): Promise<EstudianteConAcudiente[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("estudiantes")
+    .select("*, acudientes ( nombres, apellidos )")
+    .eq("id_acudiente", idAcudiente)
+    .order("apellidos")
+  return (data ?? []) as unknown as EstudianteConAcudiente[]
+}
+
 function parseInput(formData: FormData) {
   const idAcudiente = formData.get("idAcudiente")
   return estudianteSchema.safeParse({

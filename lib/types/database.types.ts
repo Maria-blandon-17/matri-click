@@ -187,6 +187,8 @@ export interface Database {
           fecha_matricula: string
           estado_matricula: EstadoMatricula
           observaciones: string | null
+          id_acudiente_solicitante: string | null
+          motivo_estado: string | null
         }
         Insert: {
           id_matricula?: string
@@ -197,6 +199,8 @@ export interface Database {
           fecha_matricula?: string
           estado_matricula?: EstadoMatricula
           observaciones?: string | null
+          id_acudiente_solicitante?: string | null
+          motivo_estado?: string | null
         }
         Relationships: []
         Update: Partial<Database["public"]["Tables"]["matriculas"]["Insert"]>

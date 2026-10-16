@@ -312,10 +312,12 @@ const WAVE_INTERVAL_DESKTOP_MS = 42
 const WAVE_INTERVAL_MOBILE_MS = 70
 
 /** Grilla de puntos estática como fondo CSS (cero costo por frame). El canvas solo pinta
- *  los puntos resaltados alrededor del cursor, encima de esta grilla. */
+ *  los puntos resaltados alrededor del cursor, encima de esta grilla. `--wave-dot-rgb`
+ *  (definida en globals.css, distinta en `:root`/`.dark`) hace que el color de los puntos
+ *  responda al tema sin recrear el fondo en JS. */
 const DOT_PATTERN_STYLE: React.CSSProperties = {
   backgroundImage:
-    "radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 1px, transparent 1.6px)",
+    "radial-gradient(circle at center, rgb(var(--wave-dot-rgb) / 0.12) 1px, transparent 1.6px)",
   backgroundSize: `${GRID_SPACING}px ${GRID_SPACING}px`,
   backgroundPosition: `-${GRID_SPACING / 2}px -${GRID_SPACING / 2}px`,
 }
@@ -373,11 +375,29 @@ export function WaveCanvas({
 
     const mouse = { x: -3000, y: -3000, targetX: -3000, targetY: -3000, inside: false }
 
+    // El canvas no puede heredar colores vía CSS como el resto de la página, así que
+    // se relee el tema actual de <html> cada vez que cambia (toggle del dashboard/landing,
+    // sin reload) para decidir el blend mode de las cintas y el color de los puntos.
+    let isDark = document.documentElement.classList.contains("dark")
+    let dotRgb = getComputedStyle(document.documentElement).getPropertyValue("--wave-dot-rgb").trim() || "255, 255, 255"
+
+    function refreshTheme() {
+      isDark = document.documentElement.classList.contains("dark")
+      dotRgb =
+        getComputedStyle(document.documentElement).getPropertyValue("--wave-dot-rgb").trim() ||
+        "255, 255, 255"
+      drawWaves(lastTime)
+      dotsDirty = true
+    }
+
     function drawWaves(time: number) {
       waveCtx!.setTransform(1, 0, 0, 1, 0, 0)
       waveCtx!.clearRect(0, 0, waveCanvas!.width, waveCanvas!.height)
       waveCtx!.setTransform(waveRes, 0, 0, waveRes, 0, 0)
-      waveCtx!.globalCompositeOperation = "screen"
+      // "screen" aclara sobre fondo oscuro (como siempre); sobre fondo claro aclararía
+      // hasta casi desaparecer, así que en claro se usa "multiply" para que las cintas
+      // se vean como un tinte azul sobre el blanco en vez de lavarse.
+      waveCtx!.globalCompositeOperation = isDark ? "screen" : "multiply"
 
       for (const wave of layers) {
         const startY = height * wave.startY
@@ -453,7 +473,7 @@ export function WaveCanvas({
           const ease = norm * norm * (3 - 2 * norm)
           dotCtx.beginPath()
           dotCtx.arc(x, y, 1 + (MAX_RADIUS - 1) * ease, 0, Math.PI * 2)
-          dotCtx.fillStyle = `rgba(255, 255, 255, ${(0.53 * ease).toFixed(3)})`
+          dotCtx.fillStyle = `rgba(${dotRgb}, ${(0.53 * ease).toFixed(3)})`
           dotCtx.fill()
         }
       }
@@ -521,6 +541,11 @@ export function WaveCanvas({
     ro.observe(container)
     const io = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()))
     io.observe(container)
+    // El toggle de tema (ThemeToggle) cambia la clase `dark` de <html> directo, sin
+    // navegación — sin esto, las cintas/puntos no se enterarían del cambio hasta el
+    // próximo full reload.
+    const themeObserver = new MutationObserver(refreshTheme)
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
 
     resizeWaves()
     drawWaves(0)
@@ -537,6 +562,7 @@ export function WaveCanvas({
       stop()
       ro.disconnect()
       io.disconnect()
+      themeObserver.disconnect()
       window.removeEventListener("resize", resizeDots)
       window.removeEventListener("mousemove", onMouseMove)
       document.documentElement.removeEventListener("mouseleave", onMouseLeave)

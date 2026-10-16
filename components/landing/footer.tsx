@@ -26,7 +26,7 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <Logo size={36} />
               <span className="text-lg font-black tracking-tight">MatriClick</span>
-              <span className="h-6 w-px bg-white/15" aria-hidden="true" />
+              <span className="h-6 w-px bg-border" aria-hidden="true" />
               <Image
                 src="/assets/institucion-logo.jpeg"
                 alt="Institución Educativa Barrio Santa Margarita"
@@ -106,7 +106,7 @@ export function Footer() {
           </nav>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/5 pt-6 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} MatriClick. Todos los derechos reservados.
           </p>

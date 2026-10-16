@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 export function Hero() {
   return (
     <section className="relative mx-auto mb-24 flex max-w-3xl flex-col items-center gap-6 px-4 pt-36 pb-24 text-center sm:pt-44">
-      <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
         <span className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(43,102,255,0.85)]" />
         Matrículas escolares, sin el papeleo
       </span>
@@ -33,7 +33,7 @@ export function Hero() {
         />
         <Button
           variant="ghost"
-          className="rounded-full px-6 py-3 text-sm font-medium text-muted-foreground hover:bg-white/5 hover:text-foreground"
+          className="rounded-full px-6 py-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
           nativeButton={false}
           render={<Link href="/login">Iniciar sesión</Link>}
         />

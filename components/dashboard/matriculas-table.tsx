@@ -30,7 +30,7 @@ export function MatriculasTable({ matriculas }: { matriculas: UltimaMatricula[] 
   return (
     <Table>
       <TableHeader>
-        <TableRow className="border-white/5 hover:bg-transparent">
+        <TableRow className="border-border hover:bg-transparent">
           <TableHead className="font-label-mono text-[11px] tracking-wider text-muted-foreground uppercase">
             Estudiante
           </TableHead>
@@ -53,7 +53,7 @@ export function MatriculasTable({ matriculas }: { matriculas: UltimaMatricula[] 
       </TableHeader>
       <TableBody>
         {matriculas.map((matricula) => (
-          <TableRow key={matricula.id_matricula} className="border-white/5 hover:bg-white/[0.03]">
+          <TableRow key={matricula.id_matricula} className="border-border hover:bg-accent/40">
             <TableCell>
               <div className="flex items-center gap-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[12px] font-bold text-primary/80">

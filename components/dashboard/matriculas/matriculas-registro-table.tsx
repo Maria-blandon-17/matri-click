@@ -1,9 +1,11 @@
 "use client"
 
-import { Clock } from "lucide-react"
+import { Clock, UserRound } from "lucide-react"
 
 import { eliminarMatricula, type MatriculaConRelaciones } from "@/lib/actions/matriculas"
+import { estadoVinculoSolicitud } from "@/lib/matriculas-vinculo"
 import { EstadoMatriculaSelect } from "@/components/dashboard/matriculas/estado-matricula-select"
+import { VinculoSolicitudBadge } from "@/components/dashboard/matriculas/vinculo-solicitud-badge"
 import { EstadoMatriculaBadge } from "@/components/dashboard/estado-matricula-badge"
 import { DeleteButton } from "@/components/dashboard/crud/delete-button"
 import { DataTable } from "@/components/dashboard/data-table"
@@ -52,7 +54,8 @@ export function MatriculasRegistroTable({
       }
       renderRow={(matricula) => {
         const pendiente = matricula.estado_matricula === "Pendiente"
-        const acudiente = matricula.estudiantes?.acudientes
+        const solicitante = matricula.acudiente_solicitante
+        const vinculo = pendiente ? estadoVinculoSolicitud(matricula) : null
         return (
           <TableRow
             key={matricula.id_matricula}
@@ -75,8 +78,18 @@ export function MatriculasRegistroTable({
                   </p>
                   <p className="font-label-mono text-[10px] text-muted-foreground">
                     {matricula.codigo_matricula}
-                    {pendiente && acudiente && ` · Solicitada por ${acudiente.nombres} ${acudiente.apellidos}`}
                   </p>
+                  {pendiente && solicitante && (
+                    <p className="font-label-mono mt-1 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-700 dark:text-amber-400">
+                      <UserRound className="size-3 shrink-0" />
+                      {solicitante.nombres} {solicitante.apellidos}
+                    </p>
+                  )}
+                  {vinculo && (
+                    <div className="mt-1">
+                      <VinculoSolicitudBadge estado={vinculo} />
+                    </div>
+                  )}
                 </div>
               </div>
             </TableCell>
@@ -95,6 +108,14 @@ export function MatriculasRegistroTable({
                 <EstadoMatriculaSelect id={matricula.id_matricula} estado={matricula.estado_matricula} />
               ) : (
                 <EstadoMatriculaBadge estado={matricula.estado_matricula} />
+              )}
+              {matricula.motivo_estado && (
+                <p
+                  className="mt-1 max-w-48 truncate text-[11px] text-muted-foreground italic"
+                  title={matricula.motivo_estado}
+                >
+                  &ldquo;{matricula.motivo_estado}&rdquo;
+                </p>
               )}
             </TableCell>
             {esAdmin && (

@@ -1,7 +1,7 @@
 import { getInicioDashboardData } from "@/lib/actions/dashboard"
 import { getPeriodos } from "@/lib/actions/periodos"
 import { getPerfilActual } from "@/lib/actions/perfil"
-import { getEstudiantes } from "@/lib/actions/estudiantes"
+import { getEstudiantes, getEstudiantesDeAcudiente } from "@/lib/actions/estudiantes"
 import { getMatriculas } from "@/lib/actions/matriculas"
 import { getGrupos } from "@/lib/actions/grupos"
 import { getCuentasPendientes } from "@/lib/actions/cuentas-pendientes"
@@ -20,7 +20,11 @@ export default async function InicioPage() {
       rol === "acudiente" ? perfil?.id_acudiente != null : perfil?.id_estudiante != null
 
     const [estudiantes, matriculas] = await Promise.all([
-      vinculado ? getEstudiantes() : Promise.resolve([]),
+      vinculado
+        ? rol === "acudiente"
+          ? getEstudiantesDeAcudiente(perfil!.id_acudiente!)
+          : getEstudiantes()
+        : Promise.resolve([]),
       vinculado ? getMatriculas() : Promise.resolve([]),
     ])
 
@@ -32,7 +36,12 @@ export default async function InicioPage() {
           rol={rol}
           greeting={greeting}
         />
-        <InicioPersonal vinculado={vinculado} estudiantes={estudiantes} matriculas={matriculas} />
+        <InicioPersonal
+          vinculado={vinculado}
+          rol={rol}
+          estudiantes={estudiantes}
+          matriculas={matriculas}
+        />
       </div>
     )
   }
@@ -71,6 +80,7 @@ export default async function InicioPage() {
       initialData={initialData}
       periodoActivoLabel={periodoActivoLabel}
       grupos={grupos}
+      esAdmin={esAdmin}
       matriculasPendientes={matriculasPendientes}
       cuentasPendientes={cuentasPendientes}
     />

@@ -10,7 +10,7 @@ export function GruposLista({ grupos }: { grupos: GrupoConRelaciones[] }) {
         <h3 className="text-sm font-bold">Grupos</h3>
         <Link
           href="/dashboard/academico/grupos"
-          className="font-label-mono text-[11px] text-muted-foreground underline decoration-white/20 transition-colors hover:text-foreground"
+          className="font-label-mono text-[11px] text-muted-foreground underline decoration-muted-foreground/40 transition-colors hover:text-foreground"
         >
           Ver todos
         </Link>

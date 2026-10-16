@@ -89,7 +89,15 @@ supabase/migrations/   0001_schema … 0006_endurecer_permisos_funciones,
                         0009_estados_matricula (agrega 'En revisión'/'Rechazada'/'Expirada' al
                         enum estado_matricula), 0010_expirar_matriculas (pg_cron: job diario que
                         pasa a 'Expirada' — habilitar la extensión pg_cron en el dashboard antes),
-                        0011_aceptacion_terminos (perfiles.terminos_aceptados_at/terminos_version)
+                        0011_aceptacion_terminos (perfiles.terminos_aceptados_at/terminos_version),
+                        0012_matricula_acudiente_cualquier_estudiante (ver "Solicitud de
+                        matrícula" más abajo: acudiente ya puede ver y solicitar matrícula para
+                        cualquier estudiante, no solo el suyo), 0013_solicitante_matricula
+                        (agrega `matriculas.id_acudiente_solicitante`, para saber quién pidió
+                        cada matrícula ahora que puede no ser el acudiente vinculado al
+                        estudiante), 0014_motivo_estado_matricula (agrega
+                        `matriculas.motivo_estado`, motivo opcional del admin al rechazar o
+                        cancelar, visible también para el acudiente)
                         — correr en ese orden en el SQL Editor de Supabase
                         (no hay CLI de supabase configurada, se aplican a mano). Agregar valores a
                         un enum: un archivo con solo los `ADD VALUE` (Postgres no deja usarlos en
@@ -167,7 +175,12 @@ acudiente | estudiante`) y opcionalmente con `id_profesor`/`id_acudiente`/`id_es
 - RLS activo en todas las tablas: admin ve todo, profesor solo sus grupos/estudiantes/matrículas
   (y sin permiso de escritura en ninguna tabla salvo lo que RLS le explicite — hoy solo lectura),
   acudiente solo su(s) estudiante(s) (sin escritura), estudiante solo su propio registro (sin
-  escritura). Verificado end-to-end con cuentas de prueba.
+  escritura) — **excepto `estudiantes` (SELECT) y `matriculas` (INSERT en `Pendiente`)**, donde
+  acudiente ve y puede solicitar matrícula para **cualquier** estudiante de la plataforma, no solo
+  el suyo (migración `0012`, decisión explícita del usuario 2026-10-15, pensada para la pantalla
+  "Solicitar matrícula" — efecto colateral: también amplía lo que ve en `/dashboard/estudiantes`,
+  porque RLS es por fila, no por pantalla). El resto de la matriz de permisos sigue verificada
+  end-to-end con cuentas de prueba.
 - **Control de acceso también en la UI del dashboard, no solo en RLS:** cada página bajo
   `app/dashboard/**` que tiene botones de crear/editar/eliminar hace
   `getPerfilActual()` y solo los renderiza si `perfil.rol === "admin"` (RLS ya lo bloqueaba a

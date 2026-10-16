@@ -35,7 +35,7 @@ export function HowItWorks() {
         </p>
       </div>
       <div className="relative grid grid-cols-1 gap-10 sm:grid-cols-4 sm:gap-8">
-        <div className="absolute top-6 right-12 left-12 hidden h-px bg-white/10 sm:block" />
+        <div className="absolute top-6 right-12 left-12 hidden h-px bg-border sm:block" />
         {steps.map((step, index) => (
           <div key={step.number} className="relative flex flex-col items-start gap-3 text-left">
             <div

@@ -42,15 +42,15 @@ export function Modules() {
         {modules.map((module) => (
           <div
             key={module.title}
-            className="glass-card flex flex-col rounded-2xl border-t border-t-white/10 p-6 transition-colors hover:bg-white/[0.03]"
+            className="glass-card flex flex-col rounded-2xl border-t border-t-border p-6 transition-colors hover:bg-accent/40"
           >
             <div className="mb-4 flex size-10 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
               <module.icon className="size-5" />
             </div>
             <h4 className="mb-2 text-lg font-medium">{module.title}</h4>
             <p className="mb-4 text-sm text-muted-foreground">{module.description}</p>
-            <span className="font-label-mono mt-auto flex items-center gap-1.5 text-[10px] text-emerald-400 uppercase">
-              <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+            <span className="font-label-mono mt-auto flex items-center gap-1.5 text-[10px] text-emerald-600 uppercase dark:text-emerald-400">
+              <span className="size-1.5 rounded-full bg-emerald-600 shadow-[0_0_6px_rgba(52,211,153,0.8)] dark:bg-emerald-400" />
               Disponible
             </span>
           </div>

@@ -69,14 +69,14 @@ export default function TerminosPage() {
         {secciones.map((s) => (
           <section key={s.titulo}>
             <h2 className="mb-2 text-lg font-semibold">{s.titulo}</h2>
-            <p className="text-sm leading-relaxed text-white/70">{s.texto}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{s.texto}</p>
           </section>
         ))}
       </div>
 
       <Link
         href="/registro"
-        className="mt-12 inline-block text-sm font-medium text-white hover:text-primary hover:underline"
+        className="mt-12 inline-block text-sm font-medium text-foreground hover:text-primary hover:underline"
       >
         Volver al registro
       </Link>

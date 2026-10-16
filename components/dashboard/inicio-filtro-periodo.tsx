@@ -1,25 +1,26 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { CalendarRange, Loader2, Filter, ExternalLink } from "lucide-react"
+import { useMemo, useState, useTransition } from "react"
+import { CalendarRange, Loader2 } from "lucide-react"
 
 import { getInicioDashboardData, type InicioDashboardData } from "@/lib/actions/dashboard"
 import type { MatriculaConRelaciones } from "@/lib/actions/matriculas"
 import type { CuentaPendiente } from "@/lib/actions/cuentas-pendientes"
 import type { GrupoConRelaciones } from "@/lib/actions/grupos"
 import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent } from "@/components/ui/combobox"
-import { AiInsightCard } from "@/components/dashboard/ai-insight-card"
-import { OcupacionGauge } from "@/components/dashboard/ocupacion-gauge"
 import { MatriculasTable } from "@/components/dashboard/matriculas-table"
-import { ResumenCards } from "@/components/dashboard/resumen-cards"
-import { OcupacionGradoChart } from "@/components/dashboard/ocupacion-grado-chart"
+import { OcupacionResumenCard } from "@/components/dashboard/ocupacion-resumen-card"
+import { AtencionPanel } from "@/components/dashboard/atencion-panel"
 import { GruposLista } from "@/components/dashboard/grupos-lista"
-import { MiniCalendario } from "@/components/dashboard/mini-calendario"
-import { PendientesPanel } from "@/components/dashboard/pendientes-panel"
-import { ProBanner } from "@/components/dashboard/pro-banner"
 import type { Database } from "@/lib/types/database.types"
 
 type Periodo = Database["public"]["Tables"]["periodos_academicos"]["Row"]
+
+function diasParaCierre(periodo: Periodo | undefined): number | null {
+  if (!periodo) return null
+  const dias = Math.ceil((new Date(periodo.fecha_fin).getTime() - Date.now()) / 86_400_000)
+  return dias >= 0 ? dias : null
+}
 
 export function InicioFiltroPeriodo({
   header,
@@ -27,6 +28,7 @@ export function InicioFiltroPeriodo({
   initialData,
   periodoActivoLabel,
   grupos,
+  esAdmin,
   matriculasPendientes,
   cuentasPendientes,
 }: {
@@ -35,6 +37,7 @@ export function InicioFiltroPeriodo({
   initialData: InicioDashboardData
   periodoActivoLabel: string
   grupos: GrupoConRelaciones[]
+  esAdmin: boolean
   matriculasPendientes: MatriculaConRelaciones[]
   cuentasPendientes: CuentaPendiente[]
 }) {
@@ -42,10 +45,15 @@ export function InicioFiltroPeriodo({
   const [periodoId, setPeriodoId] = useState("all")
   const [isPending, startTransition] = useTransition()
 
-  const periodoLabel =
+  const periodoSeleccionado =
     periodoId === "all"
-      ? periodoActivoLabel
-      : (periodos.find((p) => p.id_periodo === periodoId)?.nombre_periodo ?? "Periodo")
+      ? periodos.find((p) => p.nombre_periodo === periodoActivoLabel)
+      : periodos.find((p) => p.id_periodo === periodoId)
+
+  const periodoLabel =
+    periodoId === "all" ? periodoActivoLabel : (periodoSeleccionado?.nombre_periodo ?? "Periodo")
+
+  const cierre = useMemo(() => diasParaCierre(periodoSeleccionado), [periodoSeleccionado])
 
   const items = Object.fromEntries([
     ["all", "Todos los periodos"],
@@ -60,51 +68,55 @@ export function InicioFiltroPeriodo({
     })
   }
 
-  const mostrarPendientes =
-    matriculasPendientes.length > 0 || cuentasPendientes.length > 0
-
   return (
     <div className="flex flex-col gap-5">
-      {header}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <CalendarRange className="size-4 text-muted-foreground" />
-        <span className="font-label-mono text-xs text-muted-foreground uppercase">Periodo</span>
-        <Combobox value={periodoId} onValueChange={onPeriodoChange} items={items}>
-          <ComboboxTrigger className="h-9 w-52 border-white/10 bg-card/60">
-            <ComboboxValue />
-          </ComboboxTrigger>
-          <ComboboxContent searchPlaceholder="Buscar periodo..." />
-        </Combobox>
-        {isPending && <Loader2 className="size-4 animate-spin text-primary" />}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        {header}
+        <div className="flex flex-wrap items-center gap-2">
+          {cierre !== null && (
+            <span className="font-label-mono rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+              {periodoLabel} cierra en {cierre} {cierre === 1 ? "día" : "días"}
+            </span>
+          )}
+          <CalendarRange className="size-4 text-muted-foreground" />
+          <Combobox value={periodoId} onValueChange={onPeriodoChange} items={items}>
+            <ComboboxTrigger className="h-9 w-52 border-border bg-card/60">
+              <ComboboxValue />
+            </ComboboxTrigger>
+            <ComboboxContent searchPlaceholder="Buscar periodo..." />
+          </Combobox>
+          {isPending && <Loader2 className="size-4 animate-spin text-primary" />}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-6 xl:flex-row">
-        {/* Columna central */}
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <ResumenCards resumen={data.resumen} />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
+        <OcupacionResumenCard
+          ocupacion={data.ocupacion}
+          ocupacionPorGrado={data.ocupacionPorGrado}
+          grupos={data.resumen.academico.grupos}
+          grados={data.resumen.academico.grados}
+          periodoLabel={periodoLabel}
+        />
+        <AtencionPanel
+          esAdmin={esAdmin}
+          matriculasPendientes={matriculasPendientes}
+          cuentasPendientes={cuentasPendientes}
+          resumen={data.resumen}
+        />
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <OcupacionGradoChart datos={data.ocupacionPorGrado} />
-          <GruposLista grupos={grupos} />
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.5fr]">
+        <GruposLista grupos={grupos} />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <AiInsightCard porcentaje={data.ocupacion.porcentaje} />
-          <OcupacionGauge ocupacion={data.ocupacion} periodo={periodoLabel} />
-        </div>
-
-        <div className="glass-card flex flex-col rounded-2xl">
-          <div className="flex items-center justify-between border-b border-white/5 bg-card/40 p-6">
-            <h3 className="text-lg font-semibold">Últimas matrículas</h3>
-            <div className="flex gap-2">
-              <button className="flex size-8 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10">
-                <Filter className="size-4.5" />
-              </button>
-              <button className="flex size-8 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10">
-                <ExternalLink className="size-4.5" />
-              </button>
-            </div>
+        <section className="glass-card flex flex-col rounded-2xl">
+          <div className="flex items-center justify-between border-b border-border p-6">
+            <h3 className="text-base font-bold">Últimas matrículas</h3>
+            <a
+              href="/dashboard/matriculas"
+              className="font-label-mono text-[11px] text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground"
+            >
+              Ver todas
+            </a>
           </div>
           <div
             key={data.matriculas.map((m) => m.id_matricula).join("-") || "empty"}
@@ -112,17 +124,7 @@ export function InicioFiltroPeriodo({
           >
             <MatriculasTable matriculas={data.matriculas} />
           </div>
-        </div>
-      </div>
-
-        {/* Columna derecha */}
-        <aside className="flex shrink-0 flex-col gap-5 xl:w-[300px]">
-          <ProBanner />
-          <MiniCalendario />
-          {mostrarPendientes && (
-            <PendientesPanel matriculas={matriculasPendientes} cuentas={cuentasPendientes} />
-          )}
-        </aside>
+        </section>
       </div>
     </div>
   )

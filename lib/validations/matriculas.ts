@@ -18,4 +18,7 @@ export const estadoMatriculaSchema = z.object({
     "Finalizada",
     "Expirada",
   ]),
+  // Solo se usa (y se pide en la UI) al pasar a "Rechazada"/"Cancelada" — opcional, nunca
+  // bloquea el cambio de estado. Ver ROADMAP.md.
+  motivo: z.string().trim().max(500, "Máximo 500 caracteres.").optional().or(z.literal("")),
 })

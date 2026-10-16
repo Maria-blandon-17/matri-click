@@ -86,8 +86,51 @@ desde el mismo selector de estado que ya existía en `/dashboard/matriculas`
   solo porque otro llegó primero). `getMatriculasPendientesCount()` alimenta un badge ámbar en el
   sidebar/topbar visible solo para admin.
 - RLS nueva: `grupos_select_acudiente` (el acudiente necesita ver el catálogo de grupos para
-  elegir uno) y `matriculas_insert_acudiente` (solo puede insertar en estado `"Pendiente"` y solo
-  para su(s) propio(s) estudiante(s) — no puede auto-aprobarse ni matricular a otro).
+  elegir uno) y `matriculas_insert_acudiente` (solo puede insertar en estado `"Pendiente"` — no
+  puede auto-aprobarse).
+- **Actualización (2026-10-15, decisión explícita del usuario):** al principio
+  `matriculas_insert_acudiente` y `estudiantes_select_acudiente` restringían todo a "su(s) propio(s)
+  estudiante(s)" (`id_acudiente` del estudiante = el suyo). Se amplió a propósito en
+  `supabase/migrations/0012_matricula_acudiente_cualquier_estudiante.sql`: el selector de
+  "Solicitar matrícula" debía mostrar y permitir elegir **cualquier** estudiante registrado en la
+  plataforma, con buscador — no solo los vinculados a esa cuenta. El admin sigue siendo quien
+  aprueba/rechaza cada solicitud, así que nadie queda matriculado automáticamente. Efecto
+  colateral documentado en `CLAUDE.md`: como RLS es por fila y no por pantalla, el acudiente
+  también ve ahora el listado completo de `/dashboard/estudiantes`, no solo su(s) hijo(s).
+- **Seguimiento (mismo día):** con el cambio de arriba, `/dashboard/inicio` del acudiente (que
+  antes listaba sus estudiantes vinculados por `getEstudiantes()`) habría empezado a mostrar
+  **todos** los estudiantes de la plataforma — `getEstudiantes()` ya no filtra nada por su cuenta
+  propia, porque la política de SELECT se amplió. Se agregó
+  `getEstudiantesDeAcudiente(idAcudiente)` (`lib/actions/estudiantes.ts`) con un `.eq("id_acudiente",
+  …)` explícito en la query (un filtro de aplicación no depende de qué tan ancho sea RLS) para
+  volver a acotar esa pantalla a "sus" estudiantes — pero ahora unida con las matrículas que él
+  mismo solicitó (vía la columna nueva `id_acudiente_solicitante`, migración `0013`), para que un
+  estudiante que registró sin estar formalmente vinculado también aparezca. Ver
+  `components/dashboard/inicio-personal.tsx` (`construirRegistros`) y
+  `supabase/migrations/0013_solicitante_matricula.sql`. De paso se corrigió un bug: "Solicitada
+  por" en `/dashboard/matriculas` (`matriculas-registro-table.tsx`) asumía que el solicitante
+  era siempre el acudiente vinculado al estudiante — ya no es cierto, ahora usa la columna nueva.
+- **Validación de identidad al aprobar (2026-10-15, decisión explícita del usuario):** si el
+  estudiante de la solicitud YA tiene un acudiente vinculado distinto de quien la pidió,
+  `actualizarEstadoMatricula` **bloquea** el cambio a `"Activa"` con un mensaje explícito — el
+  admin tiene que resolver el conflicto a mano desde Estudiantes/Acudientes antes de poder
+  aprobar. Si el estudiante no tiene acudiente todavía, o si ya es el mismo que solicitó, no hay
+  bloqueo (y, a propósito, aprobar tampoco vincula automáticamente — eso sigue siendo una acción
+  manual aparte). El estado de ese vínculo se ve de antemano en un badge
+  (`components/dashboard/matriculas/vinculo-solicitud-badge.tsx`, usado en
+  `matriculas-registro-table.tsx` y `atencion-panel.tsx`): "Sin acudiente asignado" / "Es su
+  acudiente registrado" / "Vinculado a otro acudiente" (este último es el que bloquea). La lógica
+  de comparación vive en `lib/matriculas-vinculo.ts` — **no** en `lib/actions/matriculas.ts`,
+  porque ese archivo lleva `"use server"` y Next.js exige que todo lo que exporte sea una función
+  async (Server Action); una función síncrona ahí rompe el build.
+- **Motivo opcional al rechazar/cancelar (mismo día, misma decisión):** `EstadoMatriculaSelect`
+  abre un diálogo (`components/ui/dialog.tsx`) con un `Textarea` opcional cuando el admin elige
+  `"Rechazada"` o `"Cancelada"` — para cualquier otro estado se aplica directo, sin diálogo. Se
+  guarda en `matriculas.motivo_estado` (migración `0014_motivo_estado_matricula.sql`, columna
+  aparte de `observaciones` para no mezclar la nota de la solicitud original con el motivo del
+  rechazo) y se limpia solo si el estado vuelve a cambiar a otra cosa. Visible para el admin
+  (`matriculas-registro-table.tsx`, debajo del selector de estado) y para el acudiente
+  (`inicio-personal.tsx`, dentro de la tarjeta de su estudiante).
 - Notificación elegida: **badge en el dashboard**, no correo — evita depender del SMTP propio que
   sigue pendiente más abajo en este archivo.
 - Migración en dos archivos por una limitación de Postgres (`unsafe use of new value... New
