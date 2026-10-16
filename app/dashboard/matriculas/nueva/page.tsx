@@ -2,11 +2,13 @@ import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import { getPeriodos } from "@/lib/actions/periodos"
+import { getSedes } from "@/lib/actions/sedes"
 import { getPerfilActual } from "@/lib/actions/perfil"
 import { NuevaMatriculaForm } from "@/components/dashboard/matriculas/nueva-matricula-form"
 
 type GrupoConGrado = {
   id_grupo: string
+  id_sede: string
   nombre_grupo: string
   cupo_maximo: number
   grados: { nombre_grado: string } | null
@@ -21,7 +23,7 @@ export default async function NuevaMatriculaPage() {
 
   const supabase = await createClient()
 
-  const [{ data: estudiantes }, periodos, { data: grupos }, { data: matriculasActivas }] =
+  const [{ data: estudiantes }, periodos, sedes, { data: grupos }, { data: matriculasActivas }] =
     await Promise.all([
       supabase
         .from("estudiantes")
@@ -29,9 +31,10 @@ export default async function NuevaMatriculaPage() {
         .eq("estado_estudiante", "Activo")
         .order("apellidos"),
       getPeriodos(),
+      getSedes(),
       supabase
         .from("grupos")
-        .select("id_grupo, nombre_grupo, cupo_maximo, grados ( nombre_grado )")
+        .select("id_grupo, id_sede, nombre_grupo, cupo_maximo, grados ( nombre_grado )")
         .order("nombre_grupo") as unknown as Promise<{ data: GrupoConGrado[] | null }>,
       supabase.from("matriculas").select("id_grupo").eq("estado_matricula", "Activa"),
     ])
@@ -64,6 +67,7 @@ export default async function NuevaMatriculaPage() {
       <NuevaMatriculaForm
         estudiantes={estudiantes ?? []}
         periodos={periodos}
+        sedes={sedes}
         grupos={gruposConDisponibilidad}
         modoSolicitud={modoSolicitud}
       />

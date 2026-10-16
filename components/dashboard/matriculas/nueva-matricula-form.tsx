@@ -16,8 +16,10 @@ type Estudiante = Pick<
   "id_estudiante" | "nombres" | "apellidos" | "documento"
 >
 type Periodo = Database["public"]["Tables"]["periodos_academicos"]["Row"]
+type Sede = Pick<Database["public"]["Tables"]["sedes"]["Row"], "id_sede" | "nombre_sede">
 type Grupo = {
   id_grupo: string
+  id_sede: string
   nombre_grupo: string
   cupo_maximo: number
   matriculados: number
@@ -27,11 +29,13 @@ type Grupo = {
 export function NuevaMatriculaForm({
   estudiantes,
   periodos,
+  sedes,
   grupos,
   modoSolicitud = false,
 }: {
   estudiantes: Estudiante[]
   periodos: Periodo[]
+  sedes: Sede[]
   grupos: Grupo[]
   modoSolicitud?: boolean
 }) {
@@ -39,6 +43,7 @@ export function NuevaMatriculaForm({
     modoSolicitud ? crearSolicitudMatricula : crearMatricula,
     null
   )
+  const [sedeSeleccionada, setSedeSeleccionada] = useState<string | undefined>()
   const [grupoSeleccionado, setGrupoSeleccionado] = useState<string | undefined>()
 
   const estudianteItems = Object.fromEntries(
@@ -47,8 +52,13 @@ export function NuevaMatriculaForm({
   const periodoItems = Object.fromEntries(
     periodos.map((p) => [p.id_periodo, p.nombre_periodo])
   )
+  const sedeItems = Object.fromEntries(sedes.map((s) => [s.id_sede, s.nombre_sede]))
+  const gruposDeLaSede = useMemo(
+    () => grupos.filter((g) => g.id_sede === sedeSeleccionada),
+    [grupos, sedeSeleccionada]
+  )
   const grupoItems = Object.fromEntries(
-    grupos.map((g) => [g.id_grupo, `${g.nombre_grupo}${g.grados ? ` — ${g.grados.nombre_grado}` : ""}`])
+    gruposDeLaSede.map((g) => [g.id_grupo, `${g.nombre_grupo}${g.grados ? ` — ${g.grados.nombre_grado}` : ""}`])
   )
 
   const grupo = useMemo(
@@ -91,7 +101,23 @@ export function NuevaMatriculaForm({
             <CalendarDays className="size-5 text-primary" />
             Detalles académicos
           </h3>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <Field>
+              <FieldLabel htmlFor="idSede">Sede</FieldLabel>
+              <Combobox
+                items={sedeItems}
+                value={sedeSeleccionada}
+                onValueChange={(value) => {
+                  setSedeSeleccionada(value)
+                  setGrupoSeleccionado(undefined)
+                }}
+              >
+                <ComboboxTrigger id="idSede" className="w-full border-white/10 bg-black/20">
+                  <ComboboxValue placeholder="Selecciona una sede" />
+                </ComboboxTrigger>
+                <ComboboxContent searchPlaceholder="Buscar sede..." />
+              </Combobox>
+            </Field>
             <Field>
               <FieldLabel htmlFor="idPeriodo">Periodo académico</FieldLabel>
               <Combobox name="idPeriodo" items={periodoItems}>
@@ -109,12 +135,19 @@ export function NuevaMatriculaForm({
               <Combobox
                 name="idGrupo"
                 items={grupoItems}
+                value={grupoSeleccionado}
                 onValueChange={setGrupoSeleccionado}
+                disabled={!sedeSeleccionada}
               >
                 <ComboboxTrigger id="idGrupo" className="w-full border-white/10 bg-black/20">
-                  <ComboboxValue placeholder="Selecciona un grupo" />
+                  <ComboboxValue
+                    placeholder={sedeSeleccionada ? "Selecciona un grupo" : "Primero elige una sede"}
+                  />
                 </ComboboxTrigger>
-                <ComboboxContent searchPlaceholder="Buscar grupo..." />
+                <ComboboxContent
+                  searchPlaceholder="Buscar grupo..."
+                  emptyText="Esta sede aún no tiene grupos registrados."
+                />
               </Combobox>
               <FieldError errors={state?.errors?.idGrupo?.map((message) => ({ message }))} />
             </Field>
