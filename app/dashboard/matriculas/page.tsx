@@ -26,12 +26,19 @@ export default async function MatriculasPage({
 
   const esAdmin = perfil?.rol === "admin"
   const esAcudiente = perfil?.rol === "acudiente"
+  const hayFiltro = Boolean(params.periodo || params.estado)
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Registro de matrículas</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            Registro de matrículas
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              {matriculas.length} {hayFiltro ? "resultado" : "registrada"}
+              {matriculas.length === 1 ? "" : "s"}
+            </span>
+          </h1>
           <p className="text-sm text-muted-foreground">
             {esAcudiente
               ? "Consulta el estado de las matrículas de tu(s) estudiante(s)."

@@ -18,7 +18,7 @@ const SLIDES = [
   },
   {
     src: "/assets/auth-carousel/slide-3.webp",
-    alt: "Estudiante llegando a su colegio",
+    alt: "Estudiante llegando a la sede Santa Margarita",
   },
 ]
 

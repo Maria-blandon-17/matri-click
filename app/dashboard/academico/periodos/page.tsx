@@ -12,7 +12,12 @@ export default async function PeriodosPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Periodos académicos</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            Periodos académicos
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              {periodos.length} registrado{periodos.length === 1 ? "" : "s"}
+            </span>
+          </h1>
           <p className="text-sm text-muted-foreground">
             Gestiona los periodos y su estado.
           </p>

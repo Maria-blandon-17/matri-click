@@ -381,9 +381,14 @@ Piezas compartidas en `components/auth/`:
   fondo translúcido dejaba pasar el brillo del canvas y "lavaba" los campos). Textos sueltos sobre
   el fondo animado van en `text-white` / `text-white/70`, **sin `text-shadow`** (se veía borroso).
   Contraseña y "repite la contraseña" tienen cada uno su propio ojo mostrar/ocultar (estados
-  `showPassword`/`showConfirmPassword` independientes en `registro-form.tsx`). El campo
-  `documento` filtra no-dígitos en `onInput` (`inputMode="numeric"`, `pattern="[0-9]*"`) además
-  de validarlo en `registroSchema` (`.regex(/^\d+$/)`) — nunca solo client-side.
+  `showPassword`/`showConfirmPassword` independientes en `registro-form.tsx`). Esos dos campos
+  además son **controlados** (`password`/`confirmPassword` en estado) para poder validar en vivo,
+  mientras se escribe, que coincidan — mensaje rojo "no coinciden" o verde "coinciden" debajo del
+  campo apenas `confirmPassword` tiene contenido, sin esperar al submit. El `.refine()` de
+  `registroSchema` (`lib/validations/auth.ts`) que compara ambos campos server-side **se queda
+  igual**, como respaldo — la validación en vivo es solo UX, no reemplaza la del servidor. El
+  campo `documento` filtra no-dígitos en `onInput` (`inputMode="numeric"`, `pattern="[0-9]*"`)
+  además de validarlo en `registroSchema` (`.regex(/^\d+$/)`) — nunca solo client-side.
 - El panel del formulario de `AuthFlow` es una tarjeta `rounded-[28px]` (`isolate` + `overflow-hidden`)
   con un `<WaveCanvas layers={AUTH_WAVE_LAYERS} showDots />` detrás (`-z-20`; el degradado
   translúcido va en `-z-10`). **`isolate` es obligatorio**: sin él los z-index negativos se escapan
@@ -545,6 +550,15 @@ tokens viven en el bloque `.dark` de `app/globals.css`.
   fila; el `page.tsx` de cada pantalla sigue siendo Server Component y solo hace fetch + pasa la
   data cruda (no se puede pasar una función `renderRow` desde un Server Component directo a
   `DataTable`, por eso existe la capa intermedia de wrappers cliente).
+- Badge de total junto al `<h1>`: las 8 pantallas de catálogo (las 7 de arriba + Sedes) muestran
+  el conteo real (`array.length` de lo que ya trajo el `page.tsx` sin paginar — no hay que
+  consultarlo aparte, y **no** es el "ROWS (estimated)" del Table Editor de Supabase, que es una
+  estimación de planner y puede quedar desactualizada; confirmado 2026-10-28 comparando contra un
+  `count=exact` real). Mismo estilo que el badge "X Activas" del mockup de Sedes (`rounded-full
+  border-primary/25 bg-primary/10 text-primary`). En Estudiantes usa el total sin filtrar
+  (`estudiantesTodos.length`, no el resultado de la búsqueda `?q=`) — la cuenta de resultados
+  filtrados sigue solo en el párrafo de abajo. En Matrículas el badge sí refleja el filtro activo
+  (periodo/estado): dice "registradas" sin filtro o "resultados" con filtro.
 
 ## Sedes: tarjetas con imagen (`/dashboard/administracion/sedes`)
 

@@ -15,6 +15,8 @@ import {
   GraduationCap,
   School,
   ArrowRight,
+  Check,
+  TriangleAlert,
 } from "lucide-react"
 
 import { registro, type AuthFormState } from "@/lib/actions/auth"
@@ -31,6 +33,10 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
   const [state, action, pending] = useActionState(registro, initialState)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const confirmNoCoincide = confirmPassword.length > 0 && confirmPassword !== password
+  const confirmCoincide = confirmPassword.length > 0 && confirmPassword === password
   const [rol, setRol] = useState<"acudiente" | "estudiante" | "profesor">(
     state?.values?.rol === "estudiante" || state?.values?.rol === "profesor"
       ? state.values.rol
@@ -175,6 +181,8 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="new-password"
                 className={cn(inputClassName, "pr-12")}
@@ -201,9 +209,16 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 name="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Repite la contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                aria-invalid={confirmNoCoincide}
                 required
                 autoComplete="new-password"
-                className={cn(inputClassName, "pr-12")}
+                className={cn(
+                  inputClassName,
+                  "pr-12",
+                  confirmNoCoincide && "border-destructive focus-visible:border-destructive"
+                )}
               />
               <button
                 type="button"
@@ -213,6 +228,18 @@ export function RegistroForm({ onSwitch }: { onSwitch: () => void }) {
                 {showConfirmPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
               </button>
             </div>
+            {confirmNoCoincide && (
+              <p className="flex items-center gap-1.5 text-xs text-destructive">
+                <TriangleAlert className="size-3.5" />
+                Las contraseñas no coinciden.
+              </p>
+            )}
+            {confirmCoincide && (
+              <p className="flex items-center gap-1.5 text-xs text-emerald-400">
+                <Check className="size-3.5" />
+                Las contraseñas coinciden.
+              </p>
+            )}
             <FieldError errors={state?.errors?.confirmPassword?.map((message) => ({ message }))} />
           </Field>
 
